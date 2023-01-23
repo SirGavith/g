@@ -1,0 +1,40 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "console": "internalConsole",
+            "type": "node",
+            "request": "launch",
+            "name": "Assemble Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\assembler\\built\\assembler\\src\\main.js",
+            "args": [
+                "${file}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "console": "externalTerminal",
+            "type": "node",
+            "request": "launch",
+            "name": "Emulate Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\emulator\\built\\emulator\\src\\main.js",
+            "args": [
+                "${file}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+    ]
+}
