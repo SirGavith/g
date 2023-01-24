@@ -12,8 +12,11 @@
     - Syntax is `define b: 2` to define `b` to the value `2`
     - Using `b` looks like `STA b` but works like `STA #b`
 - `load` loads a file (relative to the .a file) into rom
-  - Syntax is `load './file.txt' into data, datalen`
-  - After `info`, alloc two new variables: a pointer to the first value, and the length
+  - Syntax is `load './file.txt', datalen`
+  - Data is loaded to `$A000`
+  - datalen points to the LO byte, which is followed by the HI byte
+  - Can only be used once in an assembly
+  - After `info`, allocs a pointer to the length
 - `@labels` are for jumping and branching to
     - Syntax is `@myLabel`
     - Jumping to the label looks like `JMP myLabel`
@@ -54,11 +57,12 @@
 ## Memory Layout
 - There are 256 total 'pages' of address space
 - My computer has 96 'pages' of RAM, 32 for IO, and 128 for ROM.
-  - `$0000` - `$00FF`: User-defined variables (zpage is manual-only at this time, but has one cycle faster reads and writes)
-  - `$0100` - `$01FF`: Stack (processor-managed)
+  - `$0000` - `$00FF`: User-defined variables (zpage is manual-only at this time, but has one cycle faster reads and writes; 256 bytes)
+  - `$0100` - `$01FF`: Stack (processor-managed; 256 bytes; 128 depth)
   - `$0200` - `$5FFF`: Variables (24k bytes)
   - `$6000` - `$7FFF`: Output (manual-only)
-  - `$8000` - `$FEFF`: Code & Input Data (32k bytes)
+  - `$8000` - `$9FFF`: Code (8k bytes)
+  - `$A000` - `$FEFF`: Data (24k bytes)
   - `$FF00` - `$FFFF`: Vectors (manual-only, final six bytes are machine-used)
 
 ## Under the Hood
