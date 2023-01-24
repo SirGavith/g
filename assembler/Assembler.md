@@ -1,17 +1,21 @@
 
-# Assembler v2
+# Assembler v1.0
+#### Includes milestones for 1.1 and 1.2
 ## Spec
 - Each instruction on a new line
 - `alloc` allocates a byte
-    - Use `alloc` to automatically define variable positions beginning at $0200
-    - Syntax is `alloc a` to alloc variable `a`
+    - Use `alloc` to automatically define variable positions (beginning at $0200)
+    - Use `alloc a` to alloc variable `a`
+    - Use `alloc a[2]` to allocate two bytes to variable `a` (1.1)
+      - `a` points to the first byte, use indexed addressing to access the others
     - Use `alloc a: $00` to allocate a variable on the zpage
+    - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C` (1.1)
     - Using `a` looks like `LDA a`
 - `define` defines an identifier with the number value
     - Use define to define immidiate constants in the code
     - Syntax is `define b: 2` to define `b` to the value `2`
     - Using `b` looks like `STA b` but works like `STA #b`
-- `load` loads a file (relative to the .a file) into rom
+- `load` loads a file (relative to the .a file) into rom (1.2)
   - Syntax is `load './file.txt', datalen`
   - Data is loaded to `$A000`
   - datalen points to the LO byte, which is followed by the HI byte
