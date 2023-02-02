@@ -7,8 +7,8 @@ const fs_1 = __importDefault(require("fs"));
 const Assembler_1 = require("./Assembler");
 // Assemble Current File
 const inFileName = process.argv.at(-1);
-if (!inFileName.endsWith('.s'))
-    throw new Assembler_1.AssemblerError('Can only assemble .s files');
+if (!inFileName.endsWith('.ga') || !inFileName.endsWith('.gassembly'))
+    throw new Assembler_1.AssemblerError('Can only assemble .ga or .gassembly files');
 const outFileName = inFileName.slice(0, -1) + 'bin';
 let lines = fs_1.default.readFileSync(inFileName, 'utf8')
     .replaceAll('\r', '');

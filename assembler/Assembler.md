@@ -1,16 +1,19 @@
 
 # Assembler v1.1
-#### Includes milestones for 1.1 and 1.2
+Includes milestones for 1.2
 ## Spec
 - Each instruction on a new line
 - `alloc` allocates a byte
     - Use `alloc` to automatically define variable positions (beginning at $0200)
-    - Use `alloc a` to alloc variable `a`
-    - Use `alloc a[2]` to allocate two bytes to variable `a` (1.1)
-      - `a` points to the first byte, use indexed addressing to access the others
-    - Use `alloc a: $00` to allocate a variable on the zpage
-    - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C` (1.1)
-      - The `[10]` doesn't do anything, but makes code more readable
+    - `alloc` has two modes
+    - Automatic allocation mode:
+      - Use `alloc a` to alloc variable `a`
+      - Use `alloc a[2]` to allocate two bytes to variable `a` (1.1)
+        - `a` points to the first byte, use indexed addressing to access the others
+    - Manual allocation mode:
+      - Use `alloc a: $00` to allocate a variable on the zpage
+      - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C` (1.1)
+      - Memory from several allocs may not overlap (1.2)
     - Using `a` looks like `LDA a`
 - `define` defines an identifier with the number value
     - Use define to define immidiate constants in the code
@@ -28,6 +31,11 @@
 - Identifiers must start with a word character, and may contain `-` and digits after that
 - Comments are after `//`, they will be ignored
 - Other lines are all the instructions found at [this link](masswerk.at/6502/6502_instruction_set.html)
+
+### Versions
+- [x] v1.0: Variable allocation, definitions, and labels; basic workings
+- [x] v1.1: Basic array allocation
+- [ ] v1.2: Data loading
 
 ### Numbers
   - Hex is preceded by a `$`
@@ -90,3 +98,61 @@
 - label: purple
 - literal: light green
 - instruction: light yellow
+
+## Instructions
+- ADC
+- AND
+- ASL
+- BCC
+- BCS
+- BEQ
+- BIT
+- BMI
+- BNE
+- BPL
+- BRK
+- BVC
+- BVS
+- CLC
+- CLD
+- CLI
+- CMP
+- CPX
+- CPY
+- DEC
+- DEX
+- DEY
+- EOR
+- INC
+- INX
+- INY
+- JMP
+- JSR
+- LDA
+- LDX
+- LDY
+- LOG
+- LSR
+- NOP
+- ORA
+- PHA
+- PHP
+- PLA
+- PLP
+- ROL
+- ROR
+- RTI
+- RTS
+- SBC
+- SEC
+- SED
+- SEI
+- STA
+- STX
+- STY
+- TAX
+- TAY
+- TSX
+- TXA
+- TXS
+- TYA

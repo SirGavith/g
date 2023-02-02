@@ -3,7 +3,7 @@ import { Assemble, AssemblerError } from './Assembler'
 
 // Assemble Current File
 const inFileName = process.argv.at(-1)!
-if (!inFileName.endsWith('.s')) throw new AssemblerError('Can only assemble .s files')
+if (!inFileName.endsWith('.ga') || !inFileName.endsWith('.gassembly')) throw new AssemblerError('Can only assemble .ga or .gassembly files')
 
 const outFileName = inFileName.slice(0, -1) + 'bin'
 
