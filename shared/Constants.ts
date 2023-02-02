@@ -21,7 +21,7 @@ export const AddressModeByteLengths = new Map<AddressModes, number>([
     [AddressModes.Indirect,          3 ],
     [AddressModes.IndirectX,         2 ],
     [AddressModes.IndirectY,         2 ],
-    [AddressModes.ZeropageR,  2 ],
+    [AddressModes.ZeropageR,         2 ],
     [AddressModes.ZeropageX,         2 ],
     [AddressModes.ZeropageY,         2 ],
 ])

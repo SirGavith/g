@@ -6,14 +6,13 @@ class CustomError extends Error {
 
 export class RuntimeError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name } }
 
-
 export class Emu6502 {
     public Storage = new Uint8Array(0xFFFF)
     public Debug = true
     public Running = true
 
-    //Registers
-    readonly registers16 = new Uint8Array(1)
+    //#region Registers
+    readonly registers16 = new Uint16Array(1)
     readonly registers8 = new Uint8Array(5)
     get PC()          { return this.registers16[0] } // Program Counter
     set PC(n: number) { this.registers16[0] = n }    // Program Counter
@@ -47,18 +46,9 @@ export class Emu6502 {
     setNZ = (n: number) => { this.Negative = n >> 8 & 1; this.Zero = n === 0 ? 1 : 0 }
     setNZC = (n: number, c: number) => { this.setNZ(n); this.Carry = c }
     setNZA = (n: number) => { this.setNZ(n); this.A = n }
+    //#endregion
 
-    StackPush(n: number) {
-        this.Storage[this.SP & 0x100] = n
-        this.SP--
-    }
-    StackPull() {
-        this.SP++
-        const pull = this.Storage[this.SP & 0x100]
-        this.Storage[this.SP & 0x100] = 0
-        return pull
-    }
-
+    //#region Execute Cycle
     Execute() {
         if (!this.Storage) throw new RuntimeError('Storage is empty')
         if (this.Storage.length !== 0x10000) throw new RuntimeError('Storage is of wrong size')
@@ -66,30 +56,42 @@ export class Emu6502 {
         this.PC = (this.Storage[ResetVector_HI] << 8) | this.Storage[ResetVector_LO]
         this.SP = 0xFF
         this.setNZ(0)
+        this.Interrupt = 1
+
+        if (this.Debug) {
+            console.log(
+                ' PC  | ' +
+                ' Opcode  | ' +
+                ' Disassembled  |' +
+                ' A  X  Y  SP |' +
+                ' NV-BDIZC |' +
+                ' $4 |' +
+                ' $200 - $210 '
+            )
+        }
 
         while (this.Running && this.PC < this.Storage.length) {
             this.ExecuteInstruction()
             this.PC++
         }
-        if (this.Debug) this.LogStatus()
     }
 
     ExecuteInstruction() {
-        if (!this.Storage) throw new RuntimeError('Rom is empty')
         const opcode = this.getOpcode()
 
+        let counterString: string = this.PC.toString(16)
         let instString: string | undefined = undefined
         let instructionBytes: number[] = []
         let disass: string | undefined = undefined
 
         if (this.Debug) {
             let addressMode: AddressModes | undefined = undefined
-
             InstructionOpcodes.forEach((opcs, instr) => {
                 for (const [mode, opc] of opcs.entries()) {
                     if (opc === opcode) {
                         instString = instr
                         addressMode = mode
+                        break
                     }
                 }
             })
@@ -98,12 +100,12 @@ export class Emu6502 {
             const bytes = AddressModeByteLengths.get(addressMode)!
 
             const num =
-                bytes === 3 ? (this.getOpcode(1) << 8 | this.getOpcode(2)).toString(16) :
+                bytes === 3 ? (this.getOpcode(2) << 8 | this.getOpcode(1)).toString(16) :
                     bytes === 2 ? this.getOpcode(1).toString(16) : ''
 
             // this.LogStatus()
 
-            for (let i = this.PC; i < bytes; i++) {
+            for (let i = this.PC; i < this.PC + bytes; i++) {
                 instructionBytes.push(this.Storage[i])
             }
 
@@ -121,60 +123,75 @@ export class Emu6502 {
                 undefined
         }
 
-        //Actually execute the instruction
         this.Instructions[opcode]()
 
         if (this.Debug) {
+            const watchArr = []
+            for (const val of this.Storage.slice(0x200, 0x210)) {
+                watchArr.push(this.ToString(val, 2, 16))
+            }
             console.log(
-                this.PC.toString(16).padStart(4, '0') + ' ' +
+                counterString.padStart(4, '0') + ' | ' +
                 instructionBytes
                     .map(b => b.toString(16).padStart(2, '0'))
-                    .join(' ').padEnd(9, ' ') +
-                (instString + ' ' + disass).padEnd(14, ' ') + '|' +
-                this.A.toString(16).padStart(2, '0') + ' ' +
-                this.X.toString(16).padStart(2, '0') + ' ' +
-                this.Y.toString(16).padStart(2, '0') + ' ' +
-                this.SP.toString(16).padStart(2, '0') + '|' +
-                this.SR.toString(2).padStart(8, '0') + '|'
+                    .join(' ').padEnd(8, ' ') + ' | '+
+                (instString + ' ' + disass).padEnd(14, ' ') + ' | ' +
+                this.ToString(this.A , 2, 16) + ' ' +
+                this.ToString(this.X , 2, 16) + ' ' +
+                this.ToString(this.Y , 2, 16) + ' ' +
+                this.ToString(this.SP, 2, 16) + ' | ' +
+                this.ToString(this.SR, 8,  2) + ' | ' +
+                //watches
+                this.ToString(this.Storage[4], 2, 16) + ' | ' +
+                watchArr.join(',')
             )
         }
     }
+    //#endregion
+
+    //#region Execute Helper Methods
     getOpcode(offset = 0) { return this.Storage[this.PC + offset] }
-    get nextByte() { this.PC++; return this.getOpcode() }
-    get nextWord() { this.PC += 2; return this.getOpcode() << 8 | this.getOpcode(-1) }
-
+    nextByte() { this.PC++; return this.getOpcode() }
+    nextWord() { this.PC += 2; return this.getOpcode() << 8 | this.getOpcode(-1) }
     getRAMWord(memAddress: number) { return (this.Storage[(memAddress + 1) & 0xFF] << 8) | this.Storage[memAddress] }
-    LogStatus() {
-        console.table({
-            'A-Register': this.ToMultiString(this.A),
-            'X-Register': this.ToMultiString(this.X),
-            'Y-Register': this.ToMultiString(this.Y),
-            'Program Counter': this.PC,
-            '': '[NV-BDIZC]',
-            'Status Register': this.SR.toString(2).padStart(8, '0')
-        })
-
-        // console.table(this.Storage.slice(0, 3))
+    StackPush(n: number) {
+        this.Storage[this.SP & 0x100] = n
+        this.SP--
     }
+    StackPull() {
+        this.SP++
+        const pull = this.Storage[this.SP & 0x100]
+        this.Storage[this.SP & 0x100] = 0
+        return pull
+    }
+    //#endregion
+
+    //#region Helper Methods
     private ToMultiString(n: number) {
-        return `0b${n.toString(2)}  ${n.toString(10)}  0x${n.toString(16)}`
+        return `0b${n.toString(2)}  ${n.toString(10)}  \$${n.toString(16)}`
     }
+    private ToString(n: number, length: number, base: number): string {
+        return n.toString(base).padStart(length, '0')
+    }
+    //#endregion
 
-    get AdrAbsolute() { return this.nextWord }
-    get AdrAbsoluteX() { return (this.nextWord + this.X) & 0xFFFF }
-    get AdrAbsoluteY() { return (this.nextWord + this.Y) & 0xFFFF }
-    get AdrIndirect() { return this.Storage[this.nextWord] }
-    get AdrXIndirect() { return this.getRAMWord(this.nextByte + this.X) }
-    get AdrIndirectY() { return this.Storage[this.nextByte] + this.Y }
-    get AdrRelative() { 
-        const offset = this.nextByte
+    //#region Address Mode Helpers
+    AdrAbsolute() { return this.nextWord() }
+    AdrAbsoluteX() { return (this.nextWord() + this.X) & 0xFFFF }
+    AdrAbsoluteY() { return (this.nextWord() + this.Y) & 0xFFFF }
+    AdrIndirect() { return this.Storage[this.nextWord()] }
+    AdrXIndirect() { return this.getRAMWord(this.nextByte() + this.X) }
+    AdrIndirectY() { return this.Storage[this.nextByte()] + this.Y }
+    AdrRelative() { 
+        const offset = this.nextByte()
         return ((offset & 0x80) === 0) ? offset : -(~offset + 1 & 0xFF)
     }
-    get AdrZeropage() { return this.nextByte }
-    get AdrZeropageX() { return (this.nextByte + this.X) & 0xFF }
-    get AdrZeropageY() { return (this.nextByte + this.X) & 0xFF }
+    AdrZeropage() { return this.nextByte() }
+    AdrZeropageX() { return (this.nextByte() + this.X) & 0xFF }
+    AdrZeropageY() { return (this.nextByte() + this.X) & 0xFF }
+    //#endregion
 
-    
+    //#region Instruction Methods
     /** @param arg Addition operand */
     ADC(arg: number) {
         const sum = this.A + arg + this.Carry
@@ -197,30 +214,30 @@ export class Emu6502 {
         }
     }
     /** @param arg Branch destination memory address */
-    BCC(arg: number) { if (this.Carry === 0) this.PC = arg }
+    BCC(arg: number) { if (this.Carry === 0) this.PC += arg }
     /** @param arg Branch destination memory address */
-    BCS(arg: number) { if (this.Carry === 1) this.PC = arg }
+    BCS(arg: number) { if (this.Carry === 1) this.PC += arg }
     /** @param arg Branch destination memory address */
-    BEQ(arg: number) { if (this.Zero === 1) this.PC = arg }
+    BEQ(arg: number) { if (this.Zero === 1) this.PC += arg }
     /** @param arg Bit test operand */
     BIT(arg: number) {
         this.SR = this.SR & 0x3D | (arg & 0xC0) | ((this.A & arg) === 0 ? 2 : 0)
     }
     /** @param arg Branch destination memory address */
-    BMI(arg: number) { if (this.Negative === 1) this.PC = arg }
+    BMI(arg: number) { if (this.Negative === 1) this.PC += arg }
     /** @param arg Branch destination memory address */
-    BNE(arg: number) { if (this.Zero === 0) this.PC = arg }
+    BNE(arg: number) { if (this.Zero === 0) this.PC += arg }
     /** @param arg Branch destination memory address */
-    BPL(arg: number) { if (this.Negative === 0) this.PC = arg }
+    BPL(arg: number) { if (this.Negative === 0) this.PC += arg }
 
     BRK() { //TODO: www.masswerk.at/6502/6502_instruction_set.html#BRK
         //for now, just halt
         this.Running = false
     } 
     /** @param arg Branch destination memory address */
-    BVC(arg: number) { if (this.Overflow === 0) this.PC = arg }
+    BVC(arg: number) { if (this.Overflow === 0) this.PC += arg }
     /** @param arg Branch destination memory address */
-    BVS(arg: number) { if (this.Overflow === 1) this.PC = arg }
+    BVS(arg: number) { if (this.Overflow === 1) this.PC += arg }
     CLC() { this.Carry = 0 }
     CLD() { this.Decimal = 0 }
     CLI() { this.Interrupt = 0 }
@@ -249,7 +266,7 @@ export class Emu6502 {
         this.PC = arg
     }
     /** @param arg LDA value */
-    LDA(arg: number) { this.A = arg }
+    LDA(arg: number) { this.setNZA(arg) }
     /** @param arg LDX value */
     LDX(arg: number) { this.X = arg }
     /** @param arg LDY value */
@@ -317,162 +334,165 @@ export class Emu6502 {
     TAX() { this.X = this.A }
     TAY() { this.Y = this.A }
     TSX() { this.X = this.SP }
-    TXA() { this.A = this.X }
+    TXA() { this.setNZA(this.X) }
     TXS() { this.SP = this.X }
-    TYA() { this.A = this.Y }
+    TYA() { this.setNZA(this.Y) }
+    //#endregion
 
+    //#region Instructions by Opcode
     Instructions: { [opcode: number]: () => void } = {
         0x00: () => { this.BRK() }, /** BRK impl  */
-        0x01: () => { this.ORA(this.Storage[this.AdrXIndirect]) }, /** ORA X,ind	*/
-        0x05: () => { this.ORA(this.Storage[this.AdrZeropage]) }, /** ORA zpg	*/
-        0x06: () => { this.ASL(this.AdrZeropage) }, /** ASL zpg	*/
+        0x01: () => { this.ORA(this.Storage[this.AdrXIndirect()]) }, /** ORA X,ind	*/
+        0x05: () => { this.ORA(this.Storage[this.AdrZeropage()]) }, /** ORA zpg	*/
+        0x06: () => { this.ASL(this.AdrZeropage()) }, /** ASL zpg	*/
         0x08: () => { this.PHP() }, /** PHP impl	*/
-        0x09: () => { this.ORA(this.nextByte) }, /** ORA #	    */
+        0x09: () => { this.ORA(this.nextByte()) }, /** ORA #	    */
         0x0A: () => { this.ASL() }, /** ASL A	    */
-        0x0D: () => { this.ORA(this.Storage[this.AdrAbsolute]) }, /** ORA abs	*/
-        0x0E: () => { this.ASL(this.AdrAbsolute) }, /** ASL abs	*/
-        0x10: () => { this.BPL(this.AdrRelative) }, /** BPL rel	*/
-        0x11: () => { this.ORA(this.Storage[this.AdrIndirectY]) }, /** ORA ind,Y	*/
-        0x15: () => { this.ORA(this.Storage[this.AdrZeropageX]) }, /** ORA zpg,X	*/
-        0x16: () => { this.ASL(this.AdrZeropageX) }, /** ASL zpg,X	*/
+        0x0D: () => { this.ORA(this.Storage[this.AdrAbsolute()]) }, /** ORA abs	*/
+        0x0E: () => { this.ASL(this.AdrAbsolute()) }, /** ASL abs	*/
+        0x10: () => { this.BPL(this.AdrRelative()) }, /** BPL rel	*/
+        0x11: () => { this.ORA(this.Storage[this.AdrIndirectY()]) }, /** ORA ind,Y	*/
+        0x15: () => { this.ORA(this.Storage[this.AdrZeropageX()]) }, /** ORA zpg,X	*/
+        0x16: () => { this.ASL(this.AdrZeropageX()) }, /** ASL zpg,X	*/
         0x18: () => { this.CLC() }, /** CLC impl	*/
-        0x19: () => { this.ORA(this.Storage[this.AdrAbsoluteY]) }, /** ORA abs,Y	*/
-        0x1D: () => { this.ORA(this.Storage[this.AdrAbsoluteX]) }, /** ORA abs,X	*/
-        0x1E: () => { this.ASL(this.AdrAbsoluteX) }, /** ASL abs,X	*/
-        0x20: () => { this.JSR(this.AdrAbsolute) }, /** JSR abs	*/
-        0x21: () => { this.AND(this.Storage[this.AdrXIndirect]) }, /** AND X,ind	*/
-        0x24: () => { this.BIT(this.Storage[this.AdrZeropage]) }, /** BIT zpg	*/
-        0x25: () => { this.AND(this.Storage[this.AdrZeropage]) }, /** AND zpg	*/
-        0x26: () => { this.ROL(this.AdrZeropage) }, /** ROL zpg	*/
+        0x19: () => { this.ORA(this.Storage[this.AdrAbsoluteY()]) }, /** ORA abs,Y	*/
+        0x1D: () => { this.ORA(this.Storage[this.AdrAbsoluteX()]) }, /** ORA abs,X	*/
+        0x1E: () => { this.ASL(this.AdrAbsoluteX()) }, /** ASL abs,X	*/
+        0x20: () => { this.JSR(this.AdrAbsolute()) }, /** JSR abs	*/
+        0x21: () => { this.AND(this.Storage[this.AdrXIndirect()]) }, /** AND X,ind	*/
+        0x24: () => { this.BIT(this.Storage[this.AdrZeropage()]) }, /** BIT zpg	*/
+        0x25: () => { this.AND(this.Storage[this.AdrZeropage()]) }, /** AND zpg	*/
+        0x26: () => { this.ROL(this.AdrZeropage()) }, /** ROL zpg	*/
         0x28: () => { this.PLP() }, /** PLP impl	*/
-        0x29: () => { this.AND(this.nextByte) }, /** AND #      */
+        0x29: () => { this.AND(this.nextByte()) }, /** AND #      */
         0x2A: () => { this.ROL() }, /** ROL A      */
-        0x2C: () => { this.BIT(this.Storage[this.AdrAbsolute]) }, /** BIT abs	*/
-        0x2D: () => { this.AND(this.Storage[this.AdrAbsolute]) }, /** AND abs	*/
-        0x2E: () => { this.ROL(this.AdrAbsolute) }, /** ROL abs    */
-        0x30: () => { this.BMI(this.AdrRelative) }, /** BMI rel	*/
-        0x31: () => { this.AND(this.Storage[this.AdrIndirectY]) }, /** AND ind,Y	*/
-        0x35: () => { this.AND(this.Storage[this.AdrZeropageX]) }, /** AND zpg,X	*/
-        0x36: () => { this.ROL(this.AdrZeropageX) }, /** ROL zpg,X	*/
+        0x2C: () => { this.BIT(this.Storage[this.AdrAbsolute()]) }, /** BIT abs	*/
+        0x2D: () => { this.AND(this.Storage[this.AdrAbsolute()]) }, /** AND abs	*/
+        0x2E: () => { this.ROL(this.AdrAbsolute()) }, /** ROL abs    */
+        0x30: () => { this.BMI(this.AdrRelative()) }, /** BMI rel	*/
+        0x31: () => { this.AND(this.Storage[this.AdrIndirectY()]) }, /** AND ind,Y	*/
+        0x35: () => { this.AND(this.Storage[this.AdrZeropageX()]) }, /** AND zpg,X	*/
+        0x36: () => { this.ROL(this.AdrZeropageX()) }, /** ROL zpg,X	*/
         0x38: () => { this.SEC() }, /** SEC impl	*/
-        0x39: () => { this.AND(this.Storage[this.AdrAbsoluteY]) }, /** AND abs,Y	*/
-        0x3D: () => { this.AND(this.Storage[this.AdrAbsoluteX]) }, /** AND abs,X	*/
-        0x3E: () => { this.ROL(this.AdrAbsoluteX) }, /** ROL abs,X	*/
+        0x39: () => { this.AND(this.Storage[this.AdrAbsoluteY()]) }, /** AND abs,Y	*/
+        0x3D: () => { this.AND(this.Storage[this.AdrAbsoluteX()]) }, /** AND abs,X	*/
+        0x3E: () => { this.ROL(this.AdrAbsoluteX()) }, /** ROL abs,X	*/
         0x40: () => { this.RTI() }, /** RTI impl	*/
-        0x41: () => { this.EOR(this.Storage[this.AdrXIndirect]) }, /** EOR X,ind	*/
-        0x45: () => { this.EOR(this.Storage[this.AdrZeropage]) }, /** EOR zpg	*/
-        0x46: () => { this.LSR(this.AdrZeropage) }, /** LSR zpg	*/
+        0x41: () => { this.EOR(this.Storage[this.AdrXIndirect()]) }, /** EOR X,ind	*/
+        0x45: () => { this.EOR(this.Storage[this.AdrZeropage()]) }, /** EOR zpg	*/
+        0x46: () => { this.LSR(this.AdrZeropage()) }, /** LSR zpg	*/
         0x48: () => { this.PHA() }, /** PHA impl	*/
-        0x49: () => { this.EOR(this.nextByte) }, /** EOR #	    */
+        0x49: () => { this.EOR(this.nextByte()) }, /** EOR #	    */
         0x4A: () => { this.LSR() }, /** LSR A	    */
-        0x4C: () => { this.JMP(this.AdrAbsolute) }, /** JMP abs	*/
-        0x4D: () => { this.EOR(this.Storage[this.AdrAbsolute]) }, /** EOR abs	*/
-        0x4E: () => { this.LSR(this.AdrAbsolute) }, /** LSR abs	*/
-        0x50: () => { this.BVC(this.AdrRelative) }, /** BVC rel	*/
-        0x51: () => { this.EOR(this.Storage[this.AdrIndirectY]) }, /** EOR ind,Y	*/
-        0x55: () => { this.EOR(this.Storage[this.AdrZeropageX]) }, /** EOR zpg,X	*/
-        0x56: () => { this.LSR(this.AdrZeropageX) }, /** LSR zpg,X	*/
+        0x4C: () => { this.JMP(this.AdrAbsolute()) }, /** JMP abs	*/
+        0x4D: () => { this.EOR(this.Storage[this.AdrAbsolute()]) }, /** EOR abs	*/
+        0x4E: () => { this.LSR(this.AdrAbsolute()) }, /** LSR abs	*/
+        0x50: () => { this.BVC(this.AdrRelative()) }, /** BVC rel	*/
+        0x51: () => { this.EOR(this.Storage[this.AdrIndirectY()]) }, /** EOR ind,Y	*/
+        0x55: () => { this.EOR(this.Storage[this.AdrZeropageX()]) }, /** EOR zpg,X	*/
+        0x56: () => { this.LSR(this.AdrZeropageX()) }, /** LSR zpg,X	*/
         0x58: () => { this.CLI() }, /** CLI impl	*/
-        0x59: () => { this.EOR(this.Storage[this.AdrAbsoluteY]) }, /** EOR abs,Y	*/
-        0x5D: () => { this.EOR(this.Storage[this.AdrAbsoluteX]) }, /** EOR abs,X	*/
-        0x5E: () => { this.LSR(this.AdrAbsoluteX) }, /** LSR abs,X	*/
+        0x59: () => { this.EOR(this.Storage[this.AdrAbsoluteY()]) }, /** EOR abs,Y	*/
+        0x5D: () => { this.EOR(this.Storage[this.AdrAbsoluteX()]) }, /** EOR abs,X	*/
+        0x5E: () => { this.LSR(this.AdrAbsoluteX()) }, /** LSR abs,X	*/
         0x60: () => { this.RTS() }, /** RTS impl	*/
-        0x61: () => { this.ADC(this.Storage[this.AdrXIndirect]) }, /** ADC X,ind	*/
-        0x65: () => { this.ADC(this.Storage[this.AdrZeropage]) }, /** ADC zpg	*/
-        0x66: () => { this.ROR(this.AdrZeropage) }, /** ROR zpg	*/
+        0x61: () => { this.ADC(this.Storage[this.AdrXIndirect()]) }, /** ADC X,ind	*/
+        0x65: () => { this.ADC(this.Storage[this.AdrZeropage()]) }, /** ADC zpg	*/
+        0x66: () => { this.ROR(this.AdrZeropage()) }, /** ROR zpg	*/
         0x68: () => { this.PLA() }, /** PLA impl	*/
-        0x69: () => { this.ADC(this.nextByte) }, /** ADC #	    */
+        0x69: () => { this.ADC(this.nextByte()) }, /** ADC #	    */
         0x6A: () => { this.ROR() }, /** ROR A	    */
-        0x6C: () => { this.JMP(this.AdrIndirect) }, /** JMP ind	*/
-        0x6D: () => { this.ADC(this.Storage[this.AdrAbsolute]) }, /** ADC abs	*/
-        0x6E: () => { this.ROR(this.AdrAbsolute) }, /** ROR abs	*/
-        0x70: () => { this.BVS(this.AdrRelative) }, /** BVS rel	*/
-        0x71: () => { this.ADC(this.Storage[this.AdrIndirectY]) }, /** ADC ind,Y	*/
-        0x75: () => { this.ADC(this.Storage[this.AdrZeropageX]) }, /** ADC zpg,X	*/
-        0x76: () => { this.ROR(this.AdrZeropageX) }, /** ROR zpg,X	*/
+        0x6C: () => { this.JMP(this.AdrIndirect()) }, /** JMP ind	*/
+        0x6D: () => { this.ADC(this.Storage[this.AdrAbsolute()]) }, /** ADC abs	*/
+        0x6E: () => { this.ROR(this.AdrAbsolute()) }, /** ROR abs	*/
+        0x70: () => { this.BVS(this.AdrRelative()) }, /** BVS rel	*/
+        0x71: () => { this.ADC(this.Storage[this.AdrIndirectY()]) }, /** ADC ind,Y	*/
+        0x75: () => { this.ADC(this.Storage[this.AdrZeropageX()]) }, /** ADC zpg,X	*/
+        0x76: () => { this.ROR(this.AdrZeropageX()) }, /** ROR zpg,X	*/
         0x78: () => { this.SEI() }, /** SEI impl	*/
-        0x79: () => { this.ADC(this.Storage[this.AdrAbsoluteY]) }, /** ADC abs,Y	*/
-        0x7D: () => { this.ADC(this.Storage[this.AdrAbsoluteX]) }, /** ADC abs,X	*/
-        0x7E: () => { this.ROR(this.AdrAbsoluteX) }, /** ROR abs,X	*/
-        0x81: () => { this.STA(this.AdrXIndirect) }, /** STA X,ind	*/
-        0x84: () => { this.STY(this.AdrZeropage) }, /** STY zpg	*/
-        0x85: () => { this.STA(this.AdrZeropage) }, /** STA zpg	*/
-        0x86: () => { this.STX(this.AdrZeropage) }, /** STX zpg	*/
+        0x79: () => { this.ADC(this.Storage[this.AdrAbsoluteY()]) }, /** ADC abs,Y	*/
+        0x7D: () => { this.ADC(this.Storage[this.AdrAbsoluteX()]) }, /** ADC abs,X	*/
+        0x7E: () => { this.ROR(this.AdrAbsoluteX()) }, /** ROR abs,X	*/
+        0x81: () => { this.STA(this.AdrXIndirect()) }, /** STA X,ind	*/
+        0x84: () => { this.STY(this.AdrZeropage()) }, /** STY zpg	*/
+        0x85: () => { this.STA(this.AdrZeropage()) }, /** STA zpg	*/
+        0x86: () => { this.STX(this.AdrZeropage()) }, /** STX zpg	*/
         0x88: () => { this.DEY() }, /** DEY impl	*/
         0x8A: () => { this.TXA() }, /** TXA impl	*/
-        0x8C: () => { this.STY(this.AdrAbsolute) }, /** STY abs	*/
-        0x8D: () => { this.STA(this.AdrAbsolute) }, /** STA abs	*/
-        0x8E: () => { this.STX(this.AdrAbsolute) }, /** STX abs	*/
-        0x90: () => { this.BCC(this.AdrRelative) }, /** BCC rel	*/
-        0x91: () => { this.STA(this.AdrIndirectY) }, /** STA ind,Y	*/
-        0x94: () => { this.STY(this.AdrZeropageX) }, /** STY zpg,X	*/
-        0x95: () => { this.STA(this.AdrZeropageX) }, /** STA zpg,X	*/
-        0x96: () => { this.STX(this.AdrZeropageY) }, /** STX zpg,Y	*/
+        0x8C: () => { this.STY(this.AdrAbsolute()) }, /** STY abs	*/
+        0x8D: () => { this.STA(this.AdrAbsolute()) }, /** STA abs	*/
+        0x8E: () => { this.STX(this.AdrAbsolute()) }, /** STX abs	*/
+        0x90: () => { this.BCC(this.AdrRelative()) }, /** BCC rel	*/
+        0x91: () => { this.STA(this.AdrIndirectY()) }, /** STA ind,Y	*/
+        0x94: () => { this.STY(this.AdrZeropageX()) }, /** STY zpg,X	*/
+        0x95: () => { this.STA(this.AdrZeropageX()) }, /** STA zpg,X	*/
+        0x96: () => { this.STX(this.AdrZeropageY()) }, /** STX zpg,Y	*/
         0x98: () => { this.TYA() }, /** TYA impl	*/
-        0x99: () => { this.STA(this.AdrAbsoluteY) }, /** STA abs,Y	*/
+        0x99: () => { this.STA(this.AdrAbsoluteY()) }, /** STA abs,Y	*/
         0x9A: () => { this.TXS() }, /** TXS impl	*/
-        0x9D: () => { this.STA(this.AdrAbsoluteX) }, /** STA abs,X	*/
-        0xA0: () => { this.LDY(this.nextByte) }, /** LDY #	    */
-        0xA1: () => { this.LDA(this.Storage[this.AdrXIndirect]) }, /** LDA X,ind	*/
-        0xA2: () => { this.LDX(this.nextByte) }, /** LDX #	    */
-        0xA4: () => { this.LDY(this.Storage[this.AdrZeropage]) }, /** LDY zpg	*/
-        0xA5: () => { this.LDA(this.Storage[this.AdrZeropage]) }, /** LDA zpg	*/
-        0xA6: () => { this.LDX(this.Storage[this.AdrZeropage]) }, /** LDX zpg	*/
+        0x9D: () => { this.STA(this.AdrAbsoluteX()) }, /** STA abs,X	*/
+        0xA0: () => { this.LDY(this.nextByte()) }, /** LDY #	    */
+        0xA1: () => { this.LDA(this.Storage[this.AdrXIndirect()]) }, /** LDA X,ind	*/
+        0xA2: () => { this.LDX(this.nextByte()) }, /** LDX #	    */
+        0xA4: () => { this.LDY(this.Storage[this.AdrZeropage()]) }, /** LDY zpg	*/
+        0xA5: () => { this.LDA(this.Storage[this.AdrZeropage()]) }, /** LDA zpg	*/
+        0xA6: () => { this.LDX(this.Storage[this.AdrZeropage()]) }, /** LDX zpg	*/
         0xA8: () => { this.TAY() }, /** TAY impl	*/
-        0xA9: () => { this.LDA(this.nextByte) }, /** LDA #	    */
+        0xA9: () => { this.LDA(this.nextByte()) }, /** LDA #	    */
         0xAA: () => { this.TAX() }, /** TAX impl	*/
-        0xAC: () => { this.LDY(this.Storage[this.AdrAbsolute]) }, /** LDY abs	*/
-        0xAD: () => { this.LDA(this.Storage[this.AdrAbsolute]) }, /** LDA abs	*/
-        0xAE: () => { this.LDX(this.Storage[this.AdrAbsolute]) }, /** LDX abs	*/
-        0xB0: () => { this.BCS(this.AdrRelative) }, /** BCS rel	*/
-        0xB1: () => { this.LDA(this.Storage[this.AdrIndirectY]) }, /** LDA ind,Y	*/
-        0xB4: () => { this.LDY(this.Storage[this.AdrZeropageX]) }, /** LDY zpg,X	*/
-        0xB5: () => { this.LDA(this.Storage[this.AdrZeropageX]) }, /** LDA zpg,X	*/
-        0xB6: () => { this.LDX(this.Storage[this.AdrZeropageY]) }, /** LDX zpg,Y	*/
+        0xAC: () => { this.LDY(this.Storage[this.AdrAbsolute()]) }, /** LDY abs	*/
+        0xAD: () => { this.LDA(this.Storage[this.AdrAbsolute()]) }, /** LDA abs	*/
+        0xAE: () => { this.LDX(this.Storage[this.AdrAbsolute()]) }, /** LDX abs	*/
+        0xB0: () => { this.BCS(this.AdrRelative()) }, /** BCS rel	*/
+        0xB1: () => { this.LDA(this.Storage[this.AdrIndirectY()]) }, /** LDA ind,Y	*/
+        0xB4: () => { this.LDY(this.Storage[this.AdrZeropageX()]) }, /** LDY zpg,X	*/
+        0xB5: () => { this.LDA(this.Storage[this.AdrZeropageX()]) }, /** LDA zpg,X	*/
+        0xB6: () => { this.LDX(this.Storage[this.AdrZeropageY()]) }, /** LDX zpg,Y	*/
         0xB8: () => { this.CLV() }, /** CLV impl	*/
-        0xB9: () => { this.LDA(this.Storage[this.AdrAbsoluteY]) }, /** LDA abs,Y	*/
+        0xB9: () => { this.LDA(this.Storage[this.AdrAbsoluteY()]) }, /** LDA abs,Y	*/
         0xBA: () => { this.TSX() }, /** TSX impl	*/
-        0xBC: () => { this.LDY(this.Storage[this.AdrAbsoluteX]) }, /** LDY abs,X	*/
-        0xBD: () => { this.LDA(this.Storage[this.AdrAbsoluteX]) }, /** LDA abs,X	*/
-        0xBE: () => { this.LDX(this.Storage[this.AdrAbsoluteY]) }, /** LDX abs,Y	*/
-        0xC0: () => { this.CPY(this.nextByte) }, /** CPY #	    */
-        0xC1: () => { this.CMP(this.Storage[this.AdrXIndirect]) }, /** CMP X,ind	*/
-        0xC4: () => { this.CPY(this.Storage[this.AdrZeropage]) }, /** CPY zpg	*/
-        0xC5: () => { this.CMP(this.Storage[this.AdrZeropage]) }, /** CMP zpg	*/
-        0xC6: () => { this.DEC(this.AdrZeropage) }, /** DEC zpg	*/
+        0xBC: () => { this.LDY(this.Storage[this.AdrAbsoluteX()]) }, /** LDY abs,X	*/
+        0xBD: () => { this.LDA(this.Storage[this.AdrAbsoluteX()]) }, /** LDA abs,X	*/
+        0xBE: () => { this.LDX(this.Storage[this.AdrAbsoluteY()]) }, /** LDX abs,Y	*/
+        0xC0: () => { this.CPY(this.nextByte()) }, /** CPY #	    */
+        0xC1: () => { this.CMP(this.Storage[this.AdrXIndirect()]) }, /** CMP X,ind	*/
+        0xC4: () => { this.CPY(this.Storage[this.AdrZeropage()]) }, /** CPY zpg	*/
+        0xC5: () => { this.CMP(this.Storage[this.AdrZeropage()]) }, /** CMP zpg	*/
+        0xC6: () => { this.DEC(this.AdrZeropage()) }, /** DEC zpg	*/
         0xC8: () => { this.INY() }, /** INY impl	*/
-        0xC9: () => { this.CMP(this.nextByte) }, /** CMP #	    */
+        0xC9: () => { this.CMP(this.nextByte()) }, /** CMP #	    */
         0xCA: () => { this.DEX() }, /** DEX impl	*/
-        0xCC: () => { this.CPY(this.Storage[this.AdrAbsolute]) }, /** CPY abs	*/
-        0xCD: () => { this.CMP(this.Storage[this.AdrAbsolute]) }, /** CMP abs	*/
-        0xCE: () => { this.DEC(this.AdrAbsolute) }, /** DEC abs	*/
-        0xD0: () => { this.BNE(this.AdrRelative) }, /** BNE rel	*/
-        0xD1: () => { this.CMP(this.Storage[this.AdrIndirectY]) }, /** CMP ind,Y	*/
-        0xD5: () => { this.CMP(this.Storage[this.AdrZeropageX]) }, /** CMP zpg,X	*/
-        0xD6: () => { this.DEC(this.AdrZeropageX) }, /** DEC zpg,X	*/
+        0xCC: () => { this.CPY(this.Storage[this.AdrAbsolute()]) }, /** CPY abs	*/
+        0xCD: () => { this.CMP(this.Storage[this.AdrAbsolute()]) }, /** CMP abs	*/
+        0xCE: () => { this.DEC(this.AdrAbsolute()) }, /** DEC abs	*/
+        0xD0: () => { this.BNE(this.AdrRelative()) }, /** BNE rel	*/
+        0xD1: () => { this.CMP(this.Storage[this.AdrIndirectY()]) }, /** CMP ind,Y	*/
+        0xD5: () => { this.CMP(this.Storage[this.AdrZeropageX()]) }, /** CMP zpg,X	*/
+        0xD6: () => { this.DEC(this.AdrZeropageX()) }, /** DEC zpg,X	*/
         0xD8: () => { this.CLD() }, /** CLD impl	*/
-        0xD9: () => { this.CMP(this.Storage[this.AdrAbsoluteY]) }, /** CMP abs,Y	*/
-        0xDD: () => { this.CMP(this.Storage[this.AdrAbsoluteX]) }, /** CMP abs,X	*/
-        0xDE: () => { this.DEC(this.AdrAbsoluteX) }, /** DEC abs,X	*/
-        0xE0: () => { this.CPX(this.nextByte) }, /** CPX #	    */
-        0xE1: () => { this.SBC(this.Storage[this.AdrXIndirect]) }, /** SBC X,ind	*/
-        0xE4: () => { this.CPX(this.Storage[this.AdrZeropage]) }, /** CPX zpg	*/
-        0xE5: () => { this.SBC(this.Storage[this.AdrZeropage]) }, /** SBC zpg	*/
-        0xE6: () => { this.INC(this.AdrZeropage) }, /** INC zpg	*/
+        0xD9: () => { this.CMP(this.Storage[this.AdrAbsoluteY()]) }, /** CMP abs,Y	*/
+        0xDD: () => { this.CMP(this.Storage[this.AdrAbsoluteX()]) }, /** CMP abs,X	*/
+        0xDE: () => { this.DEC(this.AdrAbsoluteX()) }, /** DEC abs,X	*/
+        0xE0: () => { this.CPX(this.nextByte()) }, /** CPX #	    */
+        0xE1: () => { this.SBC(this.Storage[this.AdrXIndirect()]) }, /** SBC X,ind	*/
+        0xE4: () => { this.CPX(this.Storage[this.AdrZeropage()]) }, /** CPX zpg	*/
+        0xE5: () => { this.SBC(this.Storage[this.AdrZeropage()]) }, /** SBC zpg	*/
+        0xE6: () => { this.INC(this.AdrZeropage()) }, /** INC zpg	*/
         0xE8: () => { this.INX() }, /** INX impl	*/
-        0xE9: () => { this.SBC(this.nextByte) }, /** SBC #	    */
+        0xE9: () => { this.SBC(this.nextByte()) }, /** SBC #	    */
         0xEA: () => { this.NOP() }, /** NOP impl	*/
-        0xEC: () => { this.CPX(this.Storage[this.AdrAbsolute]) }, /** CPX abs	*/
-        0xED: () => { this.SBC(this.Storage[this.AdrAbsolute]) }, /** SBC abs	*/
-        0xEE: () => { this.INC(this.AdrAbsolute) }, /** INC abs	*/
-        0xF0: () => { this.BEQ(this.AdrRelative) }, /** BEQ rel	*/
-        0xF1: () => { this.SBC(this.Storage[this.AdrIndirectY]) }, /** SBC ind,Y	*/
-        0xF5: () => { this.SBC(this.Storage[this.AdrZeropageX]) }, /** SBC zpg,X	*/
-        0xF6: () => { this.INC(this.AdrZeropageX) }, /** INC zpg,X	*/
+        0xEC: () => { this.CPX(this.Storage[this.AdrAbsolute()]) }, /** CPX abs	*/
+        0xED: () => { this.SBC(this.Storage[this.AdrAbsolute()]) }, /** SBC abs	*/
+        0xEE: () => { this.INC(this.AdrAbsolute()) }, /** INC abs	*/
+        0xF0: () => { this.BEQ(this.AdrRelative()) }, /** BEQ rel	*/
+        0xF1: () => { this.SBC(this.Storage[this.AdrIndirectY()]) }, /** SBC ind,Y	*/
+        0xF5: () => { this.SBC(this.Storage[this.AdrZeropageX()]) }, /** SBC zpg,X	*/
+        0xF6: () => { this.INC(this.AdrZeropageX()) }, /** INC zpg,X	*/
         0xF8: () => { this.SED() }, /** SED impl	*/
-        0xF9: () => { this.SBC(this.Storage[this.AdrAbsoluteY]) }, /** SBC abs,Y	*/
+        0xF9: () => { this.SBC(this.Storage[this.AdrAbsoluteY()]) }, /** SBC abs,Y	*/
         0xFA: () => { this.LOG() }, /** LOG impl */
-        0xFD: () => { this.SBC(this.Storage[this.AdrAbsoluteX]) }, /** SBC abs,X	*/
-        0xFE: () => { this.INC(this.AdrAbsoluteX) }, /** INC abs,X	*/
+        0xFD: () => { this.SBC(this.Storage[this.AdrAbsoluteX()]) }, /** SBC abs,X	*/
+        0xFE: () => { this.INC(this.AdrAbsoluteX()) }, /** INC abs,X	*/
     }
+    //#endregion
 }

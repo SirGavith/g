@@ -55,7 +55,24 @@ export function Assemble(rawAssembly: string): Uint8Array {
         assembly
             .filter(l => l[0].startsWith('alloc '))
             .forEach(([l, originalIndex]) => {
-                const [identifier, position] = l.slice(6).split(':').map(s => s.trim())
+                //a
+                //a:0
+                //a[2]
+                //a[3]:$0C
+                l = RemoveSpaces(l.slice(6))
+
+                let allocLength = 1
+                let identifier: string 
+                let position: string | undefined
+
+                if (l.includes('[') && l.includes(']')) {
+                    identifier = l.slice(0, l.indexOf('['))
+                    allocLength = ParseNumber(l.slice(l.indexOf('[') + 1, l.indexOf(']')))
+                    position = l.split(':')[1]
+                }
+                else {
+                    [identifier, position] = l.split(':')
+                }                
 
                 if (identifier === undefined || identifier === '')
                     throw new AssemblerError(`Alloc on line ${originalIndex} has no identifier`)
@@ -65,15 +82,15 @@ export function Assemble(rawAssembly: string): Uint8Array {
                     throw new AssemblerError(`Duplicate identifier ${identifier} on line ${originalIndex}`)
                 
                 allIdentifiers.add(identifier)
-                if (position !== undefined) {
+                if (position === undefined) {
+                    // Auto-allocated
+                    allocMapping.set(identifier, nextAvailableAllocByte)
+                    nextAvailableAllocByte += allocLength
+                }
+                else {
                     // Manually-allocated position
                     const pos = ParseNumber(position)
                     allocMapping.set(identifier, pos)
-                }
-                else {
-                    // Auto-allocated
-                    allocMapping.set(identifier, nextAvailableAllocByte)
-                    nextAvailableAllocByte += 1
                 }
             })
     }
@@ -218,7 +235,7 @@ export function Assemble(rawAssembly: string): Uint8Array {
                 const opr = operand.slice(0, -2)
 
                 operandValue = allocMapping.has(opr) ? 
-                    allocMapping.get(operand)! :
+                    allocMapping.get(opr)! :
                     ParseNumber(opr)
                 if (operandValue < 0x100) {
                     addressMode = AddressModes.ZeropageX
@@ -233,7 +250,7 @@ export function Assemble(rawAssembly: string): Uint8Array {
                 const opr = operand.slice(0, -2)
 
                 operandValue = allocMapping.has(opr) ?
-                    allocMapping.get(operand)! :
+                    allocMapping.get(opr)! :
                     ParseNumber(opr)
 
                 if (operandValue < 0x100) {

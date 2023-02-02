@@ -1,5 +1,5 @@
 
-# Assembler v1.0
+# Assembler v1.1
 #### Includes milestones for 1.1 and 1.2
 ## Spec
 - Each instruction on a new line
@@ -10,6 +10,7 @@
       - `a` points to the first byte, use indexed addressing to access the others
     - Use `alloc a: $00` to allocate a variable on the zpage
     - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C` (1.1)
+      - The `[10]` doesn't do anything, but makes code more readable
     - Using `a` looks like `LDA a`
 - `define` defines an identifier with the number value
     - Use define to define immidiate constants in the code
