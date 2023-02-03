@@ -1,1 +1,1 @@
-load './day1Input.txt' into data, datalen
+load './day1Input.txt' into data along datalen

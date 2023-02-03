@@ -1,6 +1,6 @@
 
-# Assembler v1.1
-Includes milestones for 1.2
+# Assembler v1.2
+
 ## Spec
 - Each instruction on a new line
 - `alloc` allocates a byte
@@ -8,23 +8,22 @@ Includes milestones for 1.2
     - `alloc` has two modes
     - Automatic allocation mode:
       - Use `alloc a` to alloc variable `a`
-      - Use `alloc a[2]` to allocate two bytes to variable `a` (1.1)
+      - Use `alloc a[2]` to allocate two bytes to variable `a`
         - `a` points to the first byte, use indexed addressing to access the others
     - Manual allocation mode:
       - Use `alloc a: $00` to allocate a variable on the zpage
-      - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C` (1.1)
-      - Memory from several allocs may not overlap (1.2)
+      - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C`
+      - Memory from several allocs may not overlap
     - Using `a` looks like `LDA a`
 - `define` defines an identifier with the number value
     - Use define to define immidiate constants in the code
     - Syntax is `define b: 2` to define `b` to the value `2`
     - Using `b` looks like `STA b` but works like `STA #b`
-- `load` loads a file (relative to the .a file) into rom (1.2)
-  - Syntax is `load './file.txt', datalen`
-  - Data is loaded to `$A000`
-  - datalen points to the LO byte, which is followed by the HI byte
+- `load` loads a file (relative to the .ga file) into rom
+  - Syntax is `load './file.txt' into myData along myDatalen`
+  - Data is loaded starting at `$A000`, which is `alloc`d as `myData`
+  - `myDatalen` is an array of 2: the LO byte followed by the HI byte
   - Can only be used once in an assembly
-  - After `info`, allocs a pointer to the length
 - `@labels` are for jumping and branching to
     - Syntax is `@myLabel`
     - Jumping to the label looks like `JMP myLabel`
@@ -35,7 +34,7 @@ Includes milestones for 1.2
 ### Versions
 - [x] v1.0: Variable allocation, definitions, and labels; basic workings
 - [x] v1.1: Basic array allocation
-- [ ] v1.2: Data loading
+- [x] v1.2: Data loading, alloc safety
 
 ### Numbers
   - Hex is preceded by a `$`
@@ -79,6 +78,7 @@ Includes milestones for 1.2
   - `$FF00` - `$FFFF`: Vectors (manual-only, final six bytes are machine-used)
 
 ## Under the Hood
+- Load data, allocate the data and length
 - Create mapping for allocated variables and their positions; start at $0200
 - Create mapping for defines
 - Create list of labels

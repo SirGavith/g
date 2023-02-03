@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InterruptRequestVector_HI = exports.InterruptRequestVector_LO = exports.ResetVector_HI = exports.ResetVector_LO = exports.NonmaskableInterruptVector_HI = exports.NonmaskableInterruptVector_LO = exports.BranchInstructions = exports.JSRInstruction = exports.JumpInstruction = exports.InstructionOpcodes = exports.AddressModeByteLengths = exports.AddressModes = void 0;
+exports.InterruptRequestVector_HI = exports.InterruptRequestVector_LO = exports.ResetVector_HI = exports.ResetVector_LO = exports.NonmaskableInterruptVector_HI = exports.NonmaskableInterruptVector_LO = exports.VectorsVector = exports.DataVector = exports.CodeVector = exports.OutputVector = exports.VariablesVector = exports.StackVector = exports.ZPageVector = exports.BranchInstructions = exports.JSRInstruction = exports.JumpInstruction = exports.InstructionOpcodes = exports.AddressModeByteLengths = exports.AddressModes = void 0;
 var AddressModes;
 (function (AddressModes) {
     AddressModes[AddressModes["Absolute"] = 0] = "Absolute";
@@ -296,6 +296,13 @@ exports.InstructionOpcodes = new Map([
 exports.JumpInstruction = 'JMP';
 exports.JSRInstruction = 'JSR';
 exports.BranchInstructions = ['BCC', 'BCS', 'BEQ', 'BMI', 'BNE', 'BPL', 'BVC', 'BVS'];
+exports.ZPageVector = 0x0000;
+exports.StackVector = 0x0100;
+exports.VariablesVector = 0x0200;
+exports.OutputVector = 0x6000;
+exports.CodeVector = 0x8000;
+exports.DataVector = 0xA000;
+exports.VectorsVector = 0xFF00;
 exports.NonmaskableInterruptVector_LO = 0xFFFA;
 exports.NonmaskableInterruptVector_HI = 0xFFFB;
 exports.ResetVector_LO = 0xFFFC;

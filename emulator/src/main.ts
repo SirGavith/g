@@ -2,7 +2,7 @@ import fs from 'fs'
 import { Emu6502, RuntimeError } from './Emulator'
 
 // Emulate Current File
-const inFileName = process.argv.at(-1)!
+const inFileName = process.argv[2]
 if (!inFileName.endsWith('.bin')) throw new RuntimeError('Can only emulate .bin files')
 
 

@@ -14,7 +14,8 @@
             ],
             "program": "${workspaceFolder}\\assembler\\built\\assembler\\src\\main.js",
             "args": [
-                "${file}"
+                "${file}",
+                "${fileDirname}"
             ],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"

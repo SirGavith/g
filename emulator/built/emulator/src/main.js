@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const Emulator_1 = require("./Emulator");
 // Emulate Current File
-const inFileName = process.argv.at(-1);
+const inFileName = process.argv[2];
 if (!inFileName.endsWith('.bin'))
     throw new Emulator_1.RuntimeError('Can only emulate .bin files');
 let lines = fs_1.default.readFileSync(inFileName);

@@ -1,4 +1,6 @@
 alloc a: $04
+load './day1Input.txt' into data along datalen
+
 
 alloc arr[20]
 

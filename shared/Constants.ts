@@ -13,17 +13,17 @@ export enum AddressModes {
 }
 
 export const AddressModeByteLengths = new Map<AddressModes, number>([
-    [AddressModes.Absolute,          3 ],
-    [AddressModes.AbsoluteX,         3 ],
-    [AddressModes.AbsoluteY,         3 ],
-    [AddressModes.Immediate,         2 ],
-    [AddressModes.Implied,           1 ],
-    [AddressModes.Indirect,          3 ],
-    [AddressModes.IndirectX,         2 ],
-    [AddressModes.IndirectY,         2 ],
-    [AddressModes.ZeropageR,         2 ],
-    [AddressModes.ZeropageX,         2 ],
-    [AddressModes.ZeropageY,         2 ],
+    [AddressModes.Absolute,   3 ],
+    [AddressModes.AbsoluteX,  3 ],
+    [AddressModes.AbsoluteY,  3 ],
+    [AddressModes.Immediate,  2 ],
+    [AddressModes.Implied,    1 ],
+    [AddressModes.Indirect,   3 ],
+    [AddressModes.IndirectX,  2 ],
+    [AddressModes.IndirectY,  2 ],
+    [AddressModes.ZeropageR,  2 ],
+    [AddressModes.ZeropageX,  2 ],
+    [AddressModes.ZeropageY,  2 ],
 ])
 
 export type InstructionSignature = {
@@ -300,12 +300,18 @@ export const JumpInstruction = 'JMP'
 export const JSRInstruction = 'JSR'
 export const BranchInstructions = ['BCC', 'BCS', 'BEQ', 'BMI', 'BNE', 'BPL', 'BVC', 'BVS']
 
+export const ZPageVector = 0x0000
+export const StackVector = 0x0100
+export const VariablesVector = 0x0200
+export const OutputVector = 0x6000
+export const CodeVector = 0x8000
+export const DataVector = 0xA000
+export const VectorsVector = 0xFF00
+
 export const NonmaskableInterruptVector_LO = 0xFFFA
 export const NonmaskableInterruptVector_HI = 0xFFFB
-
 export const ResetVector_LO = 0xFFFC
 export const ResetVector_HI = 0xFFFD
-
 export const InterruptRequestVector_LO = 0xFFFE
 export const InterruptRequestVector_HI = 0xFFFF
 
