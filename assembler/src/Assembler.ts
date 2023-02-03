@@ -88,80 +88,80 @@ export function Assemble(rawAssembly: string, filePath: string): Uint8Array {
         {
             const loads = assembly.filter(l => l[0].startsWith('load '))
             if (loads.length > 1) throw new AssemblerError(`Only one load can be in a file; line ${loads[1][1]}`)
-            const load = loads[0][0].split(' ')
-            const oi = loads[0][1]
-            if (!load[1].startsWith("'") && !load[1].endsWith("'"))
-                throw new AssemblerError(`load must have a proper file path on line ${oi}`)
-            
-            const providedFilePath = load[1].slice(1, -1)
-            const loadAlloc = load[3]
-            const loadLengthAlloc = load[5]
-            const loadPath = providedFilePath.startsWith('c:') ?
-                providedFilePath :
-                path.join(filePath, providedFilePath)
-            
-            //load and copy file
-            if (!fs.existsSync(loadPath))
-                throw new AssemblerError(`Load on line ${oi} points to a file that does not exist. Path: '${loadPath}'`)
-            
-            const loadFile = fs.readFileSync(loadPath)
-            const fileLength = loadFile.byteLength
+            if (loads.length === 1) {
+                const load = loads[0][0].split(' ')
+                const oi = loads[0][1]
+                if (!load[1].startsWith("'") && !load[1].endsWith("'"))
+                    throw new AssemblerError(`load must have a proper file path on line ${oi}`)
+                
+                const providedFilePath = load[1].slice(1, -1)
+                const loadPath = providedFilePath.startsWith('c:') ?
+                    providedFilePath :
+                    path.join(filePath, providedFilePath)
+                
+                //load and copy file
+                if (!fs.existsSync(loadPath))
+                    throw new AssemblerError(`Load on line ${oi} points to a file that does not exist. Path: '${loadPath}'`)
+                
+                const loadFile = fs.readFileSync(loadPath)
+                const fileLength = loadFile.byteLength
 
-            if (fileLength > VectorsVector - DataVector)
-                throw new AssemblerError(`Load data on line ${oi} is too big ${fileLength}bytes > ${VectorsVector - DataVector}bytes`)
+                if (fileLength > VectorsVector - DataVector)
+                    throw new AssemblerError(`Load data on line ${oi} is too big ${fileLength}bytes > ${VectorsVector - DataVector}bytes`)
 
-            loadFile.copy(machineCode, DataVector)
-            machineCode[DataVector + fileLength]
+                loadFile.copy(machineCode, DataVector)
+                machineCode[DataVector + fileLength] = 0
 
-            //alloc load pointer and load length pointer
-            tryAddAllocMapping(loadAlloc, DataVector, 1, oi, true)
-            tryAddAllocMapping(loadLengthAlloc, nextAvailableAllocByte, 2, oi)
-            machineCode[nextAvailableAllocByte++] = fileLength & 0xFF
-            machineCode[nextAvailableAllocByte++] = fileLength >> 8 & 0xFF
+                //alloc load pointer and load length pointer
+                tryAddAllocMapping(load[3], DataVector, 1, oi, true)
+                tryAddAllocMapping(load[5], nextAvailableAllocByte, 2, oi)
+                machineCode[nextAvailableAllocByte++] = fileLength & 0xFF
+                machineCode[nextAvailableAllocByte++] = fileLength >> 8 & 0xFF
+            }
         }
 
         // allocs
         assembly
-        .filter(l => l[0].startsWith('alloc '))
-        .forEach(([l, oi]) => {
-            //a
-            //a:0
-            //a[2]
-            //a[3]:$0C
-            l = RemoveSpaces(l.slice(6))
+            .filter(l => l[0].startsWith('alloc '))
+            .forEach(([l, oi]) => {
+                //a
+                //a:0
+                //a[2]
+                //a[3]:$0C
+                l = RemoveSpaces(l.slice(6))
 
-            let allocLength = 1
-            let identifier: string 
-            let position: string | undefined
+                let allocLength = 1
+                let identifier: string 
+                let position: string | undefined
 
-            if (l.includes('[') && l.includes(']')) {
-                identifier = l.slice(0, l.indexOf('['))
-                allocLength = ParseNumber(l.slice(l.indexOf('[') + 1, l.indexOf(']')), oi)
-                position = l.split(':')[1]
-            }
-            else {
-                [identifier, position] = l.split(':')
-            }
+                if (l.includes('[') && l.includes(']')) {
+                    identifier = l.slice(0, l.indexOf('['))
+                    allocLength = ParseNumber(l.slice(l.indexOf('[') + 1, l.indexOf(']')), oi)
+                    position = l.split(':')[1]
+                }
+                else {
+                    [identifier, position] = l.split(':')
+                }
 
-            tryAddAllocMapping(identifier, 
-                (position === undefined ? nextAvailableAllocByte : ParseNumber(position, oi)),
-                allocLength, oi)
-        })
+                tryAddAllocMapping(identifier, 
+                    (position === undefined ? nextAvailableAllocByte : ParseNumber(position, oi)),
+                    allocLength, oi)
+            })
     }   
     // Mapping between define identifiers and their definitions
     const defineMapping = new Map<string, number>()
     {
         assembly
-        .filter(l => l[0].startsWith('define '))
-        .forEach(([l, oi]) => {
-            const [identifier, value] = l.slice(7).split(':')
-                .map(s => s.trim())
-            const v = ParseNumber(value, oi)
-            if (v >= 0x100)
-                throw new AssemblerError(`Define on line ${oi} has value over 255; Immidiates must be only a byte`)
-            tryAddIdentifier(identifier, oi)
-            defineMapping.set(identifier, v)
-        })
+            .filter(l => l[0].startsWith('define '))
+            .forEach(([l, oi]) => {
+                const [identifier, value] = l.slice(7).split(':')
+                    .map(s => s.trim())
+                const v = ParseNumber(value, oi)
+                if (v >= 0x100)
+                    throw new AssemblerError(`Define on line ${oi} has value over 255; Immidiates must be only a byte`)
+                tryAddIdentifier(identifier, oi)
+                defineMapping.set(identifier, v)
+            })
     }
     // List of label identifiers, we don't yet know thier positions
     const labels = new Set<string>()
@@ -260,7 +260,25 @@ export function Assemble(rawAssembly: string, filePath: string): Uint8Array {
                     ParseNumber(opr, oi)
             }
             else if (operand.startsWith('#')) {
-                const n = ParseNumber(operand.slice(1), oi)
+                let opr = operand.slice(1)
+                let n: number
+                if (operand.at(-3) === ':') {
+                    const byte = opr.slice(-2)
+                    if (byte !== 'LO' && byte !== 'HI')
+                        throw new AssemblerError(`Alloc immediate address query must either be 'LO' or 'HI' on line ${oi}`)
+                    opr = opr.slice(0, -3)
+
+                    if (!allocMapping.has(opr))
+                        throw new AssemblerError(`Alloc immediate address identifier does not exist on line ${oi}`)
+
+                    n = (byte === 'LO') ?
+                        allocMapping.get(opr)! & 0xFF :
+                        allocMapping.get(opr)! >> 8 & 0xFF
+                }
+                else {
+                    n = ParseNumber(opr, oi)
+                }
+
                 addressMode = AddressModes.Immediate
                 operandValue = n
             }

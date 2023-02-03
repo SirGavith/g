@@ -13,6 +13,6 @@ if (!inFileName.endsWith('.ga') && !inFileName.endsWith('.gassembly'))
 const outFileName = inFileName.slice(0, -1) + 'bin';
 let lines = fs_1.default.readFileSync(inFileName, 'utf8')
     .replaceAll('\r', '');
-const rom = (0, Assembler_1.Assemble)(lines, args[1]);
-fs_1.default.writeFile(outFileName, rom, err => { if (err)
+const storage = (0, Assembler_1.Assemble)(lines, args[1]);
+fs_1.default.writeFile(outFileName, storage, err => { if (err)
     console.log(err); });

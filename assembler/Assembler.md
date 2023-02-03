@@ -1,5 +1,5 @@
 
-# Assembler v1.2
+# Assembler v1.3
 
 ## Spec
 - Each instruction on a new line
@@ -15,6 +15,7 @@
       - Use `alloc a[10]: $0C` to allocate 10 bytes on the zpage starting at address `$0C`
       - Memory from several allocs may not overlap
     - Using `a` looks like `LDA a`
+    - To immediate the address of an alloc, use `LDA #a:LO` or `LDA #a:HI`
 - `define` defines an identifier with the number value
     - Use define to define immidiate constants in the code
     - Syntax is `define b: 2` to define `b` to the value `2`
@@ -35,6 +36,7 @@
 - [x] v1.0: Variable allocation, definitions, and labels; basic workings
 - [x] v1.1: Basic array allocation
 - [x] v1.2: Data loading, alloc safety
+- [x] v1.3: Alloc immediate address querying
 
 ### Numbers
   - Hex is preceded by a `$`

@@ -37,5 +37,22 @@
                 "${workspaceFolder}/**/*.js"
             ]
         },
+        {
+            "console": "externalTerminal",
+            "type": "node",
+            "request": "launch",
+            "name": "Assemble and Emulate Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\assembleRun\\built\\assembleRun\\src\\main.js",
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
     ]
 }
