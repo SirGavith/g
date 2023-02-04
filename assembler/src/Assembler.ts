@@ -146,6 +146,7 @@ export function Assemble(rawAssembly: string, filePath: string): Uint8Array {
                 tryAddAllocMapping(identifier, 
                     (position === undefined ? nextAvailableAllocByte : ParseNumber(position, oi)),
                     allocLength, oi)
+                nextAvailableAllocByte += allocLength
             })
     }   
     // Mapping between define identifiers and their definitions
@@ -256,7 +257,7 @@ export function Assemble(rawAssembly: string, filePath: string): Uint8Array {
                 }
                 else throw new AssemblerError(`Could not understand operand ${operand} on line ${oi}`)
                 operandValue = allocMapping.has(opr) ?
-                    allocMapping.get(operand)! :
+                    allocMapping.get(opr)! :
                     ParseNumber(opr, oi)
             }
             else if (operand.startsWith('#')) {

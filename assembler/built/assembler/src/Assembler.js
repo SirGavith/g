@@ -133,6 +133,7 @@ function Assemble(rawAssembly, filePath) {
                 [identifier, position] = l.split(':');
             }
             tryAddAllocMapping(identifier, (position === undefined ? nextAvailableAllocByte : ParseNumber(position, oi)), allocLength, oi);
+            nextAvailableAllocByte += allocLength;
         });
     }
     // Mapping between define identifiers and their definitions
@@ -236,7 +237,7 @@ function Assemble(rawAssembly, filePath) {
                 else
                     throw new AssemblerError(`Could not understand operand ${operand} on line ${oi}`);
                 operandValue = allocMapping.has(opr) ?
-                    allocMapping.get(operand) :
+                    allocMapping.get(opr) :
                     ParseNumber(opr, oi);
             }
             else if (operand.startsWith('#')) {

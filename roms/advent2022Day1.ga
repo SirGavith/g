@@ -1,9 +1,0 @@
-load './day1Input.txt' into data along datalen
-
-alloc currentPointer[2]
-
-LDA #data:HI
-
-
-
-// numbers can have 4 and 5 digits

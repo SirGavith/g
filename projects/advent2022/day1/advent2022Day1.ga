@@ -1,0 +1,30 @@
+load './day1Example.txt' into data along datalen
+
+alloc cDigit[2]: $02
+alloc numberLength
+
+LDA #0
+TAY
+TAX
+STA numberLength
+//copy data into cDigit
+LDA #data:LO
+STA cDigit,X
+INY
+LDA #data:HI
+STA cDigit,X
+
+
+//read digits
+
+LDA (cDigit),Y
+
+
+
+
+// find number of digits
+// read digits in reverse:
+    // for the first digit d, add 1 d times
+    // for the nth digit d , add n d times
+
+// numbers can have 4 or 5 digits
