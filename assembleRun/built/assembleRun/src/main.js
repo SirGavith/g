@@ -17,5 +17,6 @@ const storage = (0, Assembler_1.Assemble)(lines, args[1]);
 fs_1.default.writeFile(fileName.slice(0, -2) + 'gbin', storage, err => { if (err)
     console.log(err); });
 const cpu = new Emulator_1.Emu6502();
-cpu.Storage = storage;
+cpu.Storage = new Uint8Array(0x10000);
+storage.copy(cpu.Storage);
 cpu.Execute();

@@ -9,6 +9,7 @@ let storage = fs.readFileSync(inFileName)
 
 const cpu = new Emu6502()
 
-cpu.Storage = storage
+cpu.Storage = new Uint8Array(0x10000)
+storage.copy(cpu.Storage)
 
 cpu.Execute()

@@ -39,7 +39,7 @@ function RemoveSpaces(s) {
     return s.replaceAll(' ', '');
 }
 function Assemble(rawAssembly, filePath) {
-    const machineCode = new Uint8Array(0x10000);
+    const machineCode = Buffer.alloc(0x10000);
     //do a thing
     // Split and remove comments
     const assembly = rawAssembly
@@ -133,7 +133,8 @@ function Assemble(rawAssembly, filePath) {
                 [identifier, position] = l.split(':');
             }
             tryAddAllocMapping(identifier, (position === undefined ? nextAvailableAllocByte : ParseNumber(position, oi)), allocLength, oi);
-            nextAvailableAllocByte += allocLength;
+            if (position === undefined)
+                nextAvailableAllocByte += allocLength;
         });
     }
     // Mapping between define identifiers and their definitions

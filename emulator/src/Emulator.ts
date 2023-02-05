@@ -43,7 +43,7 @@ export class Emu6502 {
     set Zero(n: number)      { this.SR = this.SR & 0xFD | n << 1 }
     set Carry(n: number)     { this.SR = this.SR & 0xFE | n }
 
-    setNZ = (n: number) => { this.Negative = n >> 8 & 1; this.Zero = n === 0 ? 1 : 0 }
+    setNZ = (n: number) => { this.Negative = n >> 7 & 1; this.Zero = n === 0 ? 1 : 0 }
     setNZC = (n: number, c: number) => { this.setNZ(n); this.Carry = c }
     setNZA = (n: number) => { this.setNZ(n); this.A = n }
     //#endregion
@@ -126,8 +126,14 @@ export class Emu6502 {
         this.Instructions[opcode]()
 
         if (this.Debug) {
-            const watchArr = []
-            for (const val of this.Storage.slice(0x200, 0x210)) {
+            const zWatchArr = [], sWatchArr = [], watchArr = []
+            for (const val of this.Storage.slice(0x00, 0x07)) {
+                zWatchArr.push(this.ToString(val, 2, 16))
+            }
+            for (const val of this.Storage.slice(0xFB, 0x100)) {
+                sWatchArr.push(this.ToString(val, 2, 16))
+            }
+            for (const val of this.Storage.slice(0x200, 0x207)) {
                 watchArr.push(this.ToString(val, 2, 16))
             }
             console.log(
@@ -142,7 +148,8 @@ export class Emu6502 {
                 this.ToString(this.SP, 2, 16) + ' | ' +
                 this.ToString(this.SR, 8,  2) + ' | ' +
                 //watches
-                this.ToString(this.Storage[4], 2, 16) + ' | ' +
+                zWatchArr.join(',') + ' | ' +
+                sWatchArr.join(',') + ' | ' +
                 watchArr.join(',')
             )
         }
@@ -155,13 +162,13 @@ export class Emu6502 {
     nextWord() { this.PC += 2; return this.getOpcode() << 8 | this.getOpcode(-1) }
     getRAMWord(memAddress: number) { return (this.Storage[(memAddress + 1) & 0xFF] << 8) | this.Storage[memAddress] }
     StackPush(n: number) {
-        this.Storage[this.SP & 0x100] = n
+        this.Storage[this.SP | 0x100] = n & 0xFF
         this.SP--
     }
     StackPull() {
         this.SP++
-        const pull = this.Storage[this.SP & 0x100]
-        this.Storage[this.SP & 0x100] = 0
+        const pull = this.Storage[this.SP | 0x100]
+        this.Storage[this.SP | 0x100] = 0
         return pull
     }
     //#endregion
@@ -180,8 +187,8 @@ export class Emu6502 {
     AdrAbsoluteX() { return (this.nextWord() + this.X) & 0xFFFF }
     AdrAbsoluteY() { return (this.nextWord() + this.Y) & 0xFFFF }
     AdrIndirect() { return this.Storage[this.nextWord()] }
-    AdrXIndirect() { return this.getRAMWord(this.nextByte() + this.X) }
-    AdrIndirectY() { return this.Storage[this.nextByte()] + this.Y }
+    AdrXIndirect() { return this.getRAMWord((this.nextByte() + this.X) & 0xFF) }
+    AdrIndirectY() { return this.getRAMWord(this.nextByte()) + this.Y }
     AdrRelative() { 
         const offset = this.nextByte()
         return ((offset & 0x80) === 0) ? offset : -(~offset + 1 & 0xFF)
@@ -251,7 +258,7 @@ export class Emu6502 {
     /** @param memAddress DEC memAddress */
     DEC(memAddress: number) { this.setNZ(this.Storage[memAddress] - 1) }
     DEX() { this.setNZ(--this.X) }
-    DEY() { this.setNZ(--this.X) }
+    DEY() { this.setNZ(--this.Y) }
     /** @param arg Compare operand */
     EOR(arg: number) { this.setNZA(this.A ^ arg) }
     /** @param memAddress INC Destination memAddress */
@@ -259,11 +266,12 @@ export class Emu6502 {
     INX() { this.setNZ(++this.X) }
     INY() { this.setNZ(++this.Y) }
     /** @param arg Jump destination memory address */
-    JMP(arg: number) { this.PC = arg }
+    JMP(arg: number) { this.PC = arg - 1 }
     /** @param arg JSR subroutine memory address */
     JSR(arg: number) {
-        this.StackPush(this.PC + 2)
-        this.PC = arg
+        this.StackPush(this.PC >> 8 & 0xFF)
+        this.StackPush(this.PC & 0xFF)
+        this.PC = arg - 1
     }
     /** @param arg LDA value */
     LDA(arg: number) { this.setNZA(arg) }
@@ -319,7 +327,9 @@ export class Emu6502 {
         this.PLP()
         this.PC = this.StackPull()
     }
-    RTS() { this.PC = this.StackPull() + 1 }
+    RTS() {
+        this.PC = (this.StackPull() | (this.StackPull() << 8)) & 0xFFFF
+    }
     /** @param arg SBC operand */
     SBC(arg: number) { this.ADC(~arg) }
     SEC() { this.Carry = 1 }

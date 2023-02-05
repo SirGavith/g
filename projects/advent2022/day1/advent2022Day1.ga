@@ -1,26 +1,86 @@
 load './day1Example.txt' into data along datalen
 
 alloc cDigit[2]: $02
-alloc numberLength
 
-LDA #0
-TAY
-TAX
-STA numberLength
 //copy data into cDigit
 LDA #data:LO
 STA cDigit,X
-INY
+INX
 LDA #data:HI
 STA cDigit,X
 
 
-//read digits
 
+
+//count digits in Y
+@loop_count_digits
 LDA (cDigit),Y
+INY
+CMP #$0A
+BNE loop_count_digits
+DEY                     //Y is number of digits
+
+alloc total_LO
+alloc total_HI
+
+alloc current_place_value
 
 
 
+//ones place                       
+JSR load_next_digit
+BEQ ones_done
+LDA #1
+STA current_place_value
+JSR add_x_place_values
+@ones_done
+
+CPY #0                  //if we're completely done, skip ahead
+BEQ done
+
+//tens place
+JSR load_next_digit
+BEQ tens_done
+LDA #10
+STA current_place_value
+JSR add_x_place_values
+@tens_done
+
+//hundreds place
+JSR load_next_digit
+BEQ hundreds_done
+LDA #100
+STA current_place_value
+JSR add_x_place_values
+@hundreds_done
+
+
+@done
+
+LDA total_LO
+BRK
+
+
+
+@load_next_digit
+    DEY
+    LDA (cDigit),Y          //load digit
+    SEC
+    SBC #$30                //convert from ascii
+    TAX                     //x is how many times to add 1
+    CPX #0                  //if it's 0, skip ahead
+    RTS
+
+@add_x_place_values
+    LDA total_LO
+    @add_place_value
+    CLC
+    ADC current_place_value
+    DEX
+    CPX #0
+    BNE add_place_value
+    STA total_LO
+    RTS
 
 // find number of digits
 // read digits in reverse:
