@@ -175,6 +175,7 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
             labels.add(identifier)
         })
     }
+    //test
 
     const labelJumpReferences: [string, number][] = [] // identifier, position of opcode
     const labelBranchReferences: [string, number][] = [] // identifier, position of opcode
