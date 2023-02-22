@@ -10,6 +10,7 @@ export class Emu6502 {
     public Storage = new Uint8Array(0xFFFF)
     public Debug = true
     public Running = true
+    Cycles = 0
 
     //#region Registers
     readonly registers16 = new Uint16Array(1)
@@ -60,12 +61,13 @@ export class Emu6502 {
 
         if (this.Debug) {
             console.log(
+                ' Cyc | ' +
                 ' PC  | ' +
                 ' Opcode  | ' +
-                ' Disassembled  |' +
+                ' Disassembled |' +
                 ' A  X  Y  SP |' +
                 ' NV-BDIZC |' +
-                ' $4 |' +
+                ' Zpage |' +
                 ' $200 - $210 '
             )
         }
@@ -73,6 +75,7 @@ export class Emu6502 {
         while (this.Running && this.PC < this.Storage.length) {
             this.ExecuteInstruction()
             this.PC++
+            this.Cycles++
         }
     }
 
@@ -127,21 +130,22 @@ export class Emu6502 {
 
         if (this.Debug) {
             const zWatchArr = [], sWatchArr = [], watchArr = []
-            for (const val of this.Storage.slice(0x00, 0x07)) {
+            for (const val of this.Storage.slice(0x00, 0x02)) {
                 zWatchArr.push(this.ToString(val, 2, 16))
             }
-            for (const val of this.Storage.slice(0xFB, 0x100)) {
+            for (const val of this.Storage.slice(0x1FB, 0x200)) {
                 sWatchArr.push(this.ToString(val, 2, 16))
             }
-            for (const val of this.Storage.slice(0x200, 0x207)) {
+            for (const val of this.Storage.slice(0x200, 0x210)) {
                 watchArr.push(this.ToString(val, 2, 16))
             }
             console.log(
+                this.ToString(this.Cycles, 4, 16) + ' | ' +
                 counterString.padStart(4, '0') + ' | ' +
                 instructionBytes
                     .map(b => b.toString(16).padStart(2, '0'))
                     .join(' ').padEnd(8, ' ') + ' | '+
-                (instString + ' ' + disass).padEnd(14, ' ') + ' | ' +
+                (instString + ' ' + disass).padEnd(13, ' ') + ' | ' +
                 this.ToString(this.A , 2, 16) + ' ' +
                 this.ToString(this.X , 2, 16) + ' ' +
                 this.ToString(this.Y , 2, 16) + ' ' +
@@ -149,7 +153,7 @@ export class Emu6502 {
                 this.ToString(this.SR, 8,  2) + ' | ' +
                 //watches
                 zWatchArr.join(',') + ' | ' +
-                sWatchArr.join(',') + ' | ' +
+                // sWatchArr.join(',') + ' | ' +
                 watchArr.join(',')
             )
         }

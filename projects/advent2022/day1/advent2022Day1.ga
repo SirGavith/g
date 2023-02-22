@@ -1,90 +1,237 @@
-load './day1Example.txt' into data along datalen
+load './day1Input.txt' into data along datalen
 
-alloc cDigit[2]: $02
+alloc current_number_pointer[2]: $00
 
-//copy data into cDigit
+alloc current_number[2]
+alloc current_place_value[2]
+alloc current_number_length
+
+alloc current_total[4]
+alloc maximum_total[4]
+
+//copy data into current_number_pointer
 LDA #data:LO
-STA cDigit,X
+STA current_number_pointer,X
 INX
 LDA #data:HI
-STA cDigit,X
+STA current_number_pointer,X
 
 
-
-
-//count digits in Y
-@loop_count_digits
-LDA (cDigit),Y
+@loop_elf
+//clear current_total
+LDA #0
+LDY #0
+STA current_total,Y
 INY
-CMP #$0A
-BNE loop_count_digits
-DEY                     //Y is number of digits
-
-alloc total_LO
-alloc total_HI
-
-alloc current_place_value
+STA current_total,Y
+INY
+STA current_total,Y
+INY
+STA current_total,Y
 
 
+@loop_number
 
-//ones place                       
-JSR load_next_digit
-BEQ ones_done
-LDA #1
-STA current_place_value
-JSR add_x_place_values
-@ones_done
+JSR load_number //load number into current_number, current_number_length (ascii bytes)
+JSR add_current_number_to_current_total
+JSR add_current_number_length_to_current_number_pointer
 
-CPY #0                  //if we're completely done, skip ahead
+LDY #0
+LDA (current_number_pointer),Y //if pointer points to digit, do it again
+
+CMP #0
 BEQ done
-
-//tens place
-JSR load_next_digit
-BEQ tens_done
-LDA #10
-STA current_place_value
-JSR add_x_place_values
-@tens_done
-
-//hundreds place
-JSR load_next_digit
-BEQ hundreds_done
-LDA #100
-STA current_place_value
-JSR add_x_place_values
-@hundreds_done
-
+CMP #$0A
+BNE loop_number
 
 @done
+JSR set_max_total
 
-LDA total_LO
+LDA #0                          //increment pointer
+STA current_number_length
+JSR add_current_number_length_to_current_number_pointer
+
+LDY #0
+LDA (current_number_pointer),Y //if pointer points to digit, do it again
+CMP #$00
+BNE loop_elf
+
+
+
 BRK
 
+@load_number
+
+    //clear current_number, current_place_value
+    LDA #0
+    LDY #1
+    STA current_number
+    STA current_number,Y
+    STA current_place_value
+    STA current_place_value,Y
 
 
-@load_next_digit
+    //count digits in Y
+    LDY #0
+    @loop_count_digits
+    LDA (current_number_pointer),Y
+    INY
+    CMP #$0A
+    BNE loop_count_digits
+    DEY                     //Y is number of digits
+    STY current_number_length
+
+    //ones place                       
+    JSR load_next_digit_AX
+    BEQ ones_done
+    LDA #1
+    STA current_place_value
+    JSR add_x_place_values
+    @ones_done
+
+    CPY #0                  //if we're completely done, skip ahead
+    BEQ number_done
+
+    //tens place
+    JSR load_next_digit_AX
+    BEQ tens_done
+    LDA #10
+    STA current_place_value
+    JSR add_x_place_values
+    @tens_done
+
+    CPY #0                  //if we're completely done, skip ahead
+    BEQ number_done
+
+    //hundreds place
+    JSR load_next_digit_AX
+    BEQ hundreds_done
+    LDA #100
+    STA current_place_value
+    JSR add_x_place_values
+    @hundreds_done
+    
+    CPY #0                  //if we're completely done, skip ahead
+    BEQ number_done
+
+    //thousands place
+    LDA #$E8
+    STA current_place_value
+    LDX #1
+    LDA #$03
+    STA current_place_value,X
+
+    JSR load_next_digit_AX
+    BEQ thousands_done
+    JSR add_x_place_values
+    @thousands_done
+
+    CPY #0                  //if we're completely done, skip ahead
+    BEQ number_done
+
+    //ten thousands place
+    LDA #$28
+    STA current_place_value
+    LDX #1
+    LDA #$10
+    STA current_place_value,X
+
+    JSR load_next_digit_AX
+    BEQ tenthousands_done
+    JSR add_x_place_values
+    @tenthousands_done
+    
+    @number_done
+
+    RTS
+
+// load next digit into A and X
+@load_next_digit_AX
     DEY
-    LDA (cDigit),Y          //load digit
+    LDA (current_number_pointer),Y          //load digit
     SEC
     SBC #$30                //convert from ascii
-    TAX                     //x is how many times to add 1
-    CPX #0                  //if it's 0, skip ahead
+    TAX                     //x is the digit
     RTS
 
-@add_x_place_values
-    LDA total_LO
+//add place_value to current_number X times
+@add_x_place_values     
+    TYA                     //Y is number of digits left; we need to use it
+    PHA                     // so push it on the stack during the subroutine
+
     @add_place_value
+    LDY #0
     CLC
-    ADC current_place_value
+    LDA current_number,Y            //load current_number LO byte
+    ADC current_place_value,Y       //add LO byte
+    STA current_number,Y            //save LO byte
+    INY
+    LDA current_number,Y            //load HI byte
+    ADC current_place_value,Y       //add HI byte + carry
+    STA current_number,Y            //save HI byte
+    
     DEX
-    CPX #0
+    TXA
     BNE add_place_value
-    STA total_LO
+
+    PLA
+    TAY
     RTS
 
-// find number of digits
-// read digits in reverse:
-    // for the first digit d, add 1 d times
-    // for the nth digit d , add n d times
+@add_current_number_to_current_total
+    LDY #0
+    CLC
+    LDA current_total,Y
+    ADC current_number,Y
+    STA current_total,Y
+    INY
+    LDA current_total,Y
+    ADC current_number,Y
+    STA current_total,Y
+    INY
+    LDA current_total,Y
+    ADC #0
+    STA current_total,Y
+    INY
+    LDA current_total,Y
+    ADC #0
+    STA current_total,Y
+    RTS
 
-// numbers can have 4 or 5 digits
+@add_current_number_length_to_current_number_pointer
+    LDY #0
+    SEC
+    LDA current_number_pointer,Y
+    ADC current_number_length,Y
+    STA current_number_pointer,Y
+    INY
+    LDA current_number_pointer,Y
+    ADC #0
+    STA current_number_pointer,Y
+    RTS
+
+@set_max_total
+    //if current_total > maximum_total; maximum_total = current_total
+    LDY #4
+    @compare_byte
+    DEY
+    LDA maximum_total,Y
+    CMP current_total,Y
+    BEQ compare_byte
+    BCS set_max_total_end
+
+    LDY #0
+    LDA current_total,Y
+    STA maximum_total,Y
+    INY
+    LDA current_total,Y
+    STA maximum_total,Y
+    INY
+    LDA current_total,Y
+    STA maximum_total,Y
+    INY
+    LDA current_total,Y
+    STA maximum_total,Y
+
+    @set_max_total_end
+    RTS

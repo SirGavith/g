@@ -1,2 +1,83 @@
-LDA #3
-CMP #5
+alloc a[1]
+alloc b[1]
+alloc c[2]
+
+//load 04 E8 AC D3
+LDA #$D3
+STA a,0
+LDA #$AC
+STA a,1
+LDA #$E8
+STA a,2
+LDA #$63
+STA a,3
+
+//load 63 52 1A 42
+LDA #$42
+STA b,0
+LDA #$1A
+STA b,1
+LDA #$52
+STA b,2
+LDA #$63
+STA b,3
+
+//    HI LO
+// a: 63 E8 AC D3
+// b: 63 52 1A 42
+
+//a: D3
+//b: 42
+JSR multiply_shorts
+
+BRK
+@compare_ints
+    LDY #4
+    @compare_byte
+    DEY
+    LDA a,Y
+    CMP b,Y
+    BEQ compare_byte
+    RTS
+
+@multiply_shorts
+
+
+    RTS
+
+@subtract_shorts
+    LDY #0
+    SEC
+    JSR sub_byte_carry_Y
+    JSR sub_byte_carry_Y
+    RTS
+
+@add_shorts
+    LDY #0
+    CLC
+    JSR add_byte_carry_Y
+    JSR add_byte_carry_Y
+    RTS
+
+@add_ints
+    LDY #0
+    CLC
+    JSR add_byte_carry_Y
+    JSR add_byte_carry_Y
+    JSR add_byte_carry_Y
+    JSR add_byte_carry_Y
+    RTS
+
+@add_byte_carry_Y
+    LDA a,Y
+    ADC b,Y
+    STA c,Y
+    INY
+    RTS
+
+@sub_byte_carry_Y
+    LDA a,Y
+    SBC b,Y
+    STA c,Y
+    INY
+    RTS

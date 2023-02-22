@@ -175,7 +175,6 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
             labels.add(identifier)
         })
     }
-    //test
 
     const labelJumpReferences: [string, number][] = [] // identifier, position of opcode
     const labelBranchReferences: [string, number][] = [] // identifier, position of opcode
@@ -301,8 +300,16 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                     allocMapping.get(opr)! :
                     ParseNumber(opr, oi)
 
-                addressMode = operandValue < 0x100 ?
+                addressMode = (operandValue < 0x100 && instructionSignatures.has(AddressModes.ZeropageY)) ?
 					AddressModes.ZeropageY : AddressModes.AbsoluteY
+            }
+            else if (operand.includes(',')) {
+                const [opr, index] = operand.split(',')
+                if (!allocMapping.has(opr))
+                    throw new AssemblerError(`Indexed address does not reference a valid identifier; line ${oi}`)
+                operandValue = allocMapping.get(opr)! + ParseNumber(index, oi)
+                addressMode = operandValue < 0x100 ?
+                    AddressModes.ZeropageR : AddressModes.Absolute
             }
             else if (allocMapping.has(operand)) {
                 operandValue = allocMapping.get(operand)!
