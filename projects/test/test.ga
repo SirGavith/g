@@ -1,36 +1,170 @@
-alloc a[1]
-alloc b[1]
-alloc c[2]
+alloc a[2]
+alloc b[2]
+alloc c[4]
+alloc t[4]
 
 //load 04 E8 AC D3
 LDA #$D3
 STA a,0
 LDA #$AC
 STA a,1
-LDA #$E8
-STA a,2
-LDA #$63
-STA a,3
+// LDA #$E8
+// STA a,2
+// LDA #$63
+// STA a,3
 
 //load 63 52 1A 42
 LDA #$42
 STA b,0
 LDA #$1A
 STA b,1
-LDA #$52
-STA b,2
-LDA #$63
-STA b,3
+// LDA #$52
+// STA b,2
+// LDA #$63
+// STA b,3
 
 //    HI LO
 // a: 63 E8 AC D3
 // b: 63 52 1A 42
 
-//a: D3
-//b: 42
+//a:  AC D3
+//b:  1A 42
 JSR multiply_shorts
 
 BRK
+
+@multiply_bytes
+    //2 bytes out, need 2 bytes temp (t)
+    LDA a
+    STA t
+
+    LDA b
+    AND #%00000001
+    BEQ multiply_bytes_2bit
+    JSR bytes_add_t_c
+
+    @multiply_bytes_2bit
+
+    LDA #%00000010
+    JSR multiply_bytes_multiply_bit_value_A
+    LDA #%00000100
+    JSR multiply_bytes_multiply_bit_value_A
+    LDA #%00001000
+    JSR multiply_bytes_multiply_bit_value_A
+    LDA #%00010000
+    JSR multiply_bytes_multiply_bit_value_A
+    LDA #%00100000
+    JSR multiply_bytes_multiply_bit_value_A
+    LDA #%01000000
+    JSR multiply_bytes_multiply_bit_value_A
+    LDA #%10000000
+    JSR multiply_bytes_multiply_bit_value_A
+
+    RTS
+
+@multiply_bytes_multiply_bit_value_A
+    ASL t
+    ROL t,1
+    BIT b
+    BEQ multiply_bytes_multiply_bit_value_A_done
+    @bytes_add_t_c
+    CLC
+    LDA c,0
+    ADC t,0
+    STA c,0
+    LDA c,1
+    ADC t,1
+    STA c,1
+    @multiply_bytes_multiply_bit_value_A_done
+    RTS
+
+@multiply_shorts
+    LDA a
+    STA t
+    LDA a,1
+    STA t,1
+
+    LDA #%00000001
+    BIT b
+    BEQ multiply_shorts_2bit
+    JSR shorts_add_t_c
+
+    @multiply_shorts_2bit
+
+    LDA #%00000010
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+    LDA #%00000100
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+    LDA #%00001000
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+    LDA #%00010000
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+    LDA #%00100000
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+    LDA #%01000000
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+    LDA #%10000000
+    JSR multiply_shorts_multiply_bit_value_A_byte0
+
+
+    LDA #%00000001
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%00000010
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%00000100
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%00001000
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%00010000
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%00100000
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%01000000
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+    LDA #%10000000
+    JSR multiply_shorts_multiply_bit_value_A_byte1
+
+    RTS
+
+@multiply_shorts_multiply_bit_value_A_byte0
+    JSR shift_t_left
+    BIT b
+    BEQ multiply_bytes_multiply_bit_value_A_byte0_done
+    JSR shorts_add_t_c
+    @multiply_bytes_multiply_bit_value_A_byte0_done
+    RTS
+
+@multiply_shorts_multiply_bit_value_A_byte1
+    JSR shift_t_left
+    BIT b,1
+    BEQ multiply_bytes_multiply_bit_value_A_byte1_done
+    JSR shorts_add_t_c
+    @multiply_bytes_multiply_bit_value_A_byte1_done
+    RTS
+    
+@shorts_add_t_c
+    CLC
+    LDA c,0
+    ADC t,0
+    STA c,0
+    LDA c,1
+    ADC t,1
+    STA c,1
+    LDA c,2
+    ADC t,2
+    STA c,2
+    LDA c,3
+    ADC t,3
+    STA c,3
+    RTS
+
+@shift_t_left
+    ASL t
+    ROL t,1
+    ROL t,2
+    ROL t,3
+    RTS
+
 @compare_ints
     LDY #4
     @compare_byte
@@ -38,11 +172,6 @@ BRK
     LDA a,Y
     CMP b,Y
     BEQ compare_byte
-    RTS
-
-@multiply_shorts
-
-
     RTS
 
 @subtract_shorts

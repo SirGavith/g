@@ -64,6 +64,7 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
     }
     // Mapping between alloc identifiers and their memory positions
     const allocMapping = new Map<string, number>()
+    const allocLengths = new Map<string, number>()
     const allocBytes = new Set<number>()
     const tryAddAllocMapping = (id: string, pos: number, length: number, oi: number, overrideSafety = false) => {
         tryAddIdentifier(id, oi)
@@ -78,6 +79,7 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
             allocBytes.add(i)
         }
         allocMapping.set(id, pos)
+        allocLengths.set(id, length)
     }
     
     //loads and allocs
@@ -307,7 +309,10 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                 const [opr, index] = operand.split(',')
                 if (!allocMapping.has(opr))
                     throw new AssemblerError(`Indexed address does not reference a valid identifier; line ${oi}`)
-                operandValue = allocMapping.get(opr)! + ParseNumber(index, oi)
+                const parsedIndex = ParseNumber(index, oi)
+                if (parsedIndex >= allocLengths.get(opr)!)
+                    throw new AssemblerError(`Indexed address index '${index}' is larger than the allocated size of ${allocLengths.get(opr)!} bytes; line ${oi}`)
+                operandValue = allocMapping.get(opr)! + parsedIndex
                 addressMode = operandValue < 0x100 ?
                     AddressModes.ZeropageR : AddressModes.Absolute
             }
