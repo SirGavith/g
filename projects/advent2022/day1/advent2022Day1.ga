@@ -11,23 +11,18 @@ alloc maximum_total[4]
 
 //copy data into current_number_pointer
 LDA #data:LO
-STA current_number_pointer,X
-INX
+STA current_number_pointer,0
 LDA #data:HI
-STA current_number_pointer,X
+STA current_number_pointer,1
 
 
 @loop_elf
 //clear current_total
 LDA #0
-LDY #0
-STA current_total,Y
-INY
-STA current_total,Y
-INY
-STA current_total,Y
-INY
-STA current_total,Y
+STA current_total,0
+STA current_total,1
+STA current_total,2
+STA current_total,3
 
 
 @loop_number
@@ -64,15 +59,14 @@ BRK
 
     //clear current_number, current_place_value
     LDA #0
-    LDY #1
-    STA current_number
-    STA current_number,Y
-    STA current_place_value
-    STA current_place_value,Y
-
+    STA current_number,0
+    STA current_number,1
+    STA current_place_value,0
+    STA current_place_value,1
+    LDY #0
 
     //count digits in Y
-    LDY #0
+    
     @loop_count_digits
     LDA (current_number_pointer),Y
     INY
@@ -142,7 +136,6 @@ BRK
     @tenthousands_done
     
     @number_done
-
     RTS
 
 // load next digit into A and X
@@ -156,58 +149,45 @@ BRK
 
 //add place_value to current_number X times
 @add_x_place_values     
-    TYA                     //Y is number of digits left; we need to use it
-    PHA                     // so push it on the stack during the subroutine
 
     @add_place_value
-    LDY #0
     CLC
-    LDA current_number,Y            //load current_number LO byte
-    ADC current_place_value,Y       //add LO byte
-    STA current_number,Y            //save LO byte
-    INY
-    LDA current_number,Y            //load HI byte
-    ADC current_place_value,Y       //add HI byte + carry
-    STA current_number,Y            //save HI byte
+    LDA current_number,0            //load current_number LO byte
+    ADC current_place_value,0       //add LO byte
+    STA current_number,0            //save LO byte
+    LDA current_number,1            //load HI byte
+    ADC current_place_value,1       //add HI byte + carry
+    STA current_number,1            //save HI byte
     
     DEX
-    TXA
     BNE add_place_value
 
-    PLA
-    TAY
     RTS
 
 @add_current_number_to_current_total
-    LDY #0
     CLC
-    LDA current_total,Y
-    ADC current_number,Y
-    STA current_total,Y
-    INY
-    LDA current_total,Y
-    ADC current_number,Y
-    STA current_total,Y
-    INY
-    LDA current_total,Y
+    LDA current_total,0
+    ADC current_number,0
+    STA current_total,0
+    LDA current_total,1
+    ADC current_number,1
+    STA current_total,1
+    LDA current_total,2
     ADC #0
-    STA current_total,Y
-    INY
-    LDA current_total,Y
+    STA current_total,2
+    LDA current_total,3
     ADC #0
-    STA current_total,Y
+    STA current_total,3
     RTS
 
 @add_current_number_length_to_current_number_pointer
-    LDY #0
     SEC
-    LDA current_number_pointer,Y
-    ADC current_number_length,Y
-    STA current_number_pointer,Y
-    INY
-    LDA current_number_pointer,Y
+    LDA current_number_pointer,0
+    ADC current_number_length,0
+    STA current_number_pointer,0
+    LDA current_number_pointer,1
     ADC #0
-    STA current_number_pointer,Y
+    STA current_number_pointer,1
     RTS
 
 @set_max_total
@@ -220,18 +200,14 @@ BRK
     BEQ compare_byte
     BCS set_max_total_end
 
-    LDY #0
-    LDA current_total,Y
-    STA maximum_total,Y
-    INY
-    LDA current_total,Y
-    STA maximum_total,Y
-    INY
-    LDA current_total,Y
-    STA maximum_total,Y
-    INY
-    LDA current_total,Y
-    STA maximum_total,Y
+    LDA current_total,0
+    STA maximum_total,0
+    LDA current_total,1
+    STA maximum_total,1
+    LDA current_total,2
+    STA maximum_total,2
+    LDA current_total,3
+    STA maximum_total,3
 
     @set_max_total_end
     RTS

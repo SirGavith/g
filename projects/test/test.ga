@@ -27,8 +27,8 @@ STA b,1
 // a: 63 E8 AC D3
 // b: 63 52 1A 42
 
-//a:  AC D3
-//b:  1A 42
+// a: AC D3
+// b: 1A 42
 JSR multiply_shorts
 
 BRK
