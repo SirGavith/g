@@ -17,6 +17,7 @@
 
 
 ## ADC
+[back](InstructionsType.md#arithmetic-instructions)
 ```
 Add Memory to Accumulator with Carry
 A + M + C -> A, C
@@ -36,6 +37,7 @@ NZCIDV
 |(indirect,X)|	ADC (oper,X)|	61|	2|	6  
 |(indirect),Y|	ADC (oper),Y|	71|	2|	5* 
 ## AND
+[back](InstructionsType.md#logical-operations)
 ```
 AND Memory with Accumulator
 A AND M -> A
@@ -55,6 +57,7 @@ NZCIDV
 |(indirect,X)|	AND (oper,X)|	21|	2|	6  
 |(indirect),Y|	AND (oper),Y|	31|	2|	5* 
 ## ASL
+[back](InstructionsType.md#shift--rotate-instructions)
 ```
 Shift Left One Bit (Memory or Accumulator)
 C <- [76543210] <- 0
@@ -71,6 +74,7 @@ NZCIDV
 |absolute|	ASL oper|	0E|	3|	6  
 |absolute,X|	ASL oper,X|	1E|	3|	7  
 ## BCC
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Carry Clear
 branch on C = 0
@@ -83,6 +87,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BCC oper|	90|	2|	2**
 ## BCS
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Carry Set
 branch on C = 1
@@ -95,6 +100,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BCS oper|	B0|	2|	2**
 ## BEQ
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Result Zero
 branch on Z = 1
@@ -107,6 +113,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BEQ oper|	F0|	2|	2**
 ## BIT
+[back](InstructionsType.md#other)
 ```
 Test Bits in Memory with Accumulator
 Bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V)
@@ -123,6 +130,7 @@ NZCIDV
 |zeropage|	BIT oper|	24|	2|	3  
 |absolute|	BIT oper|	2C|	3|	4  
 ## BMI
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Result Minus
 branch on N = 1
@@ -135,6 +143,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BMI oper|	30|	2|	2**
 ## BNE
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Result not Zero
 branch on Z = 0
@@ -147,6 +156,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BNE oper|	D0|	2|	2**
 ## BPL
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Result Plus
 branch on N = 0
@@ -159,6 +169,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BPL oper|	10|	2|	2**
 ## BRK
+[back](InstructionsType.md#interrupts)
 ```
 Force Break
 BRK initiates a software interrupt similar to a hardware interrupt (IRQ). The return address pushed to the stack is PC+2, providing an extra byte of spacing for a break mark (identifying a reason for the break.) The status register will be pushed to the stack with the break flag set to 1. However, when retrieved during RTI or by a PLP instruction, the break flag will be ignored. The interrupt disable flag is not set automatically.
@@ -173,6 +184,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	BRK|	00|	1|	7  
 ## BVC
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Overflow Clear
 branch on V = 0
@@ -185,6 +197,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BVC oper|	50|	2|	2**
 ## BVS
+[back](InstructionsType.md#conditional-branch-instructions)
 ```
 Branch on Overflow Set
 branch on V = 1
@@ -197,6 +210,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |relative|	BVS oper|	70|	2|	2**
 ## CLC
+[back](InstructionsType.md#flag-instructions)
 ```
 Clear Carry Flag
 0 -> C
@@ -209,6 +223,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	CLC|	18|	1|	2  
 ## CLD
+[back](InstructionsType.md#flag-instructions)
 ```
 Clear Decimal Mode
 0 -> D
@@ -221,6 +236,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	CLD|	D8|	1|	2  
 ## CLI
+[back](InstructionsType.md#flag-instructions)
 ```
 Clear Interrupt Disable Bit
 0 -> I
@@ -233,6 +249,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	CLI|	58|	1|	2  
 ## CLV
+[back](InstructionsType.md#flag-instructions)
 ```
 Clear Overflow Flag
 0 -> V
@@ -245,6 +262,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	CLV|	B8|	1|	2  
 ## CMP
+[back](InstructionsType.md#comparisons)
 ```
 Compare Memory with Accumulator
 A - M
@@ -264,6 +282,7 @@ NZCIDV
 |(indirect,X)|	CMP (oper,X)|	C1|	2|	6  
 |(indirect),Y|	CMP (oper),Y|	D1|	2|	5* 
 ## CPX
+[back](InstructionsType.md#comparisons)
 ```
 Compare Memory and Index X
 X - M
@@ -278,6 +297,7 @@ NZCIDV
 |zeropage|	CPX oper|	E4|	2|	3  
 |absolute|	CPX oper|	EC|	3|	4  
 ## CPY
+[back](InstructionsType.md#comparisons)
 ```
 Compare Memory and Index Y
 Y - M
@@ -292,6 +312,7 @@ NZCIDV
 |zeropage|	CPY oper|	C4|	2|	3  
 |absolute|	CPY oper|	CC|	3|	4  
 ## DEC
+[back](InstructionsType.md#decrements--increments)
 ```
 Decrement Memory by One
 M - 1 -> M
@@ -307,6 +328,7 @@ NZCIDV
 |absolute|	DEC oper|	CE|	3|	6  
 |absolute,X|	DEC oper,X|	DE|	3|	7  
 ## DEX
+[back](InstructionsType.md#decrements--increments)
 ```
 Decrement Index X by One
 X - 1 -> X
@@ -319,6 +341,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	DEX|	CA|	1|	2  
 ## DEY
+[back](InstructionsType.md#decrements--increments)
 ```
 Decrement Index Y by One
 Y - 1 -> Y
@@ -331,6 +354,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	DEY|	88|	1|	2  
 ## EOR
+[back](InstructionsType.md#logical-operations)
 ```
 Exclusive-OR Memory with Accumulator
 A EOR M -> A
@@ -350,6 +374,7 @@ NZCIDV
 |(indirect,X)|	EOR (oper,X)|	41|	2|	6  
 |(indirect),Y|	EOR (oper),Y|	51|	2|	5* 
 ## INC
+[back](InstructionsType.md#decrements--increments)
 ```
 Increment Memory by One
 M + 1 -> M
@@ -365,6 +390,7 @@ NZCIDV
 |absolute|	INC oper|	EE|	3|	6  
 |absolute,X|	INC oper,X|	FE|	3|	7  
 ## INX
+[back](InstructionsType.md#decrements--increments)
 ```
 Increment Index X by One
 X + 1 -> X
@@ -377,6 +403,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	INX|	E8|	1|	2  
 ## INY
+[back](InstructionsType.md#decrements--increments)
 ```
 Increment Index Y by One
 Y + 1 -> Y
@@ -389,6 +416,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	INY|	C8|	1|	2  
 ## JMP
+[back](InstructionsType.md#jumps--subroutines)
 ```
 Jump to New Location
 (PC+1) -> PCL 
@@ -403,6 +431,7 @@ NZCIDV
 |absolute|	JMP oper|	4C|	3|	3  
 |indirect|	JMP (oper)|	6C|	3|	5  
 ## JSR
+[back](InstructionsType.md#jumps--subroutines)
 ```
 Jump to New Location Saving Return Address
 push (PC+2)
@@ -417,6 +446,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |absolute|	JSR oper|	20|	3|	6  
 ## LDA
+[back](InstructionsType.md#transfer-operations)
 ```
 Load Accumulator with Memory
 M -> A
@@ -436,6 +466,7 @@ NZCIDV
 |(indirect,X)|	LDA (oper,X)|	A1|	2|	6  
 |(indirect),Y|	LDA (oper),Y|	B1|	2|	5* 
 ## LDX
+[back](InstructionsType.md#transfer-operations)
 ```
 Load Index X with Memory
 M -> X
@@ -452,6 +483,7 @@ NZCIDV
 |absolute|	LDX oper|	AE|	3|	4  
 |absolute,Y|	LDX oper,Y|	BE|	3|	4* 
 ## LDY
+[back](InstructionsType.md#transfer-operations)
 ```
 Load Index Y with Memory
 M -> Y
@@ -468,6 +500,7 @@ NZCIDV
 |absolute|	LDY oper|	AC|	3|	4  
 |absolute,X|	LDY oper,X|	BC|	3|	4* 
 ## LSR
+[back](InstructionsType.md#shift--rotate-instructions)
 ```
 Shift One Bit Right (Memory or Accumulator)
 0 -> [76543210] -> C
@@ -484,6 +517,7 @@ NZCIDV
 |absolute|	LSR oper|	4E|	3|	6  
 |absolute,X|	LSR oper,X|	5E|	3|	7  
 ## NOP
+[back](InstructionsType.md#other)
 ```
 No Operation
 ---
@@ -496,6 +530,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	NOP|	EA|	1|	2  
 ## ORA
+[back](InstructionsType.md#logical-operations)
 ```
 OR Memory with Accumulator
 A OR M -> A
@@ -515,6 +550,7 @@ NZCIDV
 |(indirect,X)|	ORA (oper,X)|	01|	2|	6  
 |(indirect),Y|	ORA (oper),Y|	11|	2|	5* 
 ## PHA
+[back](InstructionsType.md#stack-instructions)
 ```
 Push Accumulator on Stack
 push A
@@ -527,6 +563,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	PHA|	48|	1|	3  
 ## PHP
+[back](InstructionsType.md#stack-instructions)
 ```
 Push Processor Status on Stack
 The status register will be pushed with the break flag and bit 5 set to 1. 
@@ -540,6 +577,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	PHP|	08|	1|	3  
 ## PLA
+[back](InstructionsType.md#stack-instructions)
 ```
 Pull Accumulator from Stack
 pull A
@@ -552,6 +590,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	PLA|	68|	1|	4  
 ## PLP
+[back](InstructionsType.md#stack-instructions)
 ```
 Pull Processor Status from Stack
 The status register will be pulled with the break flag and bit 5 ignored.
@@ -565,6 +604,7 @@ from stack
 | --- | --- | --- | --- | --- |
 |implied|	PLP|	28|	1|	4  
 ## ROL
+[back](InstructionsType.md#shift--rotate-instructions)
 ```
 Rotate One Bit Left (Memory or Accumulator)
 C <- [76543210] <- C
@@ -581,6 +621,7 @@ NZCIDV
 |absolute|	ROL oper|	2E|	3|	6  
 |absolute,X|	ROL oper,X|	3E|	3|	7  
 ## ROR
+[back](InstructionsType.md#shift--rotate-instructions)
 ```
 Rotate One Bit Right (Memory or Accumulator)
 C -> [76543210] -> C
@@ -597,6 +638,7 @@ NZCIDV
 |absolute|	ROR oper|	6E|	3|	6  
 |absolute,X|	ROR oper,X|	7E|	3|	7  
 ## RTI
+[back](InstructionsType.md#interrupts)
 ```
 Return from Interrupt
 The status register is pulled with the break flag and bit 5 ignored. Then PC is pulled from the stack.
@@ -611,6 +653,7 @@ from stack
 | --- | --- | --- | --- | --- |
 |implied|	RTI|	40|	1|	6  
 ## RTS
+[back](InstructionsType.md#jumps--subroutines)
 ```
 Return from Subroutine
 pull PC, PC+1 -> PC
@@ -623,6 +666,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	RTS|	60|	1|	6  
 ## SBC
+[back](InstructionsType.md#arithmetic-operations)
 ```
 Subtract Memory from Accumulator with Borrow
 A - M - C -> A
@@ -642,6 +686,7 @@ NZCIDV
 |(indirect,X)|	SBC (oper,X)|	E1|	2|	6  
 |(indirect),Y|	SBC (oper),Y|	F1|	2|	5* 
 ## SEC
+[back](InstructionsType.md#flag-instructions)
 ```
 Set Carry Flag
 1 -> C
@@ -654,6 +699,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	SEC|	38|	1|	2  
 ## SED
+[back](InstructionsType.md#flag-instructions)
 ```
 Set Decimal Flag
 1 -> D
@@ -666,6 +712,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	SED|	F8|	1|	2  
 ## SEI
+[back](InstructionsType.md#flag-instructions)
 ```
 Set Interrupt Disable Status
 1 -> I
@@ -678,6 +725,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	SEI|	78|	1|	2  
 ## STA
+[back](InstructionsType.md#transfer-operations)
 ```
 Store Accumulator in Memory
 A -> M
@@ -696,6 +744,7 @@ NZCIDV
 |(indirect,X)|	STA (oper,X)|	81|	2|	6  
 |(indirect),Y|	STA (oper),Y|	91|	2|	6  
 ## STX
+[back](InstructionsType.md#transfer-operations)
 ```
 Store Index X in Memory
 X -> M
@@ -710,6 +759,7 @@ NZCIDV
 |zeropage,Y|	STX oper,Y|	96|	2|	4  
 |absolute|	STX oper|	8E|	3|	4  
 ## STY
+[back](InstructionsType.md#transfer-operations)
 ```
 Sore Index Y in Memory
 Y -> M
@@ -724,6 +774,7 @@ NZCIDV
 |zeropage,X|	STY oper,X|	94|	2|	4  
 |absolute|	STY oper|	8C|	3|	4  
 ## TAX
+[back](InstructionsType.md#transfer-operations)
 ```
 Transfer Accumulator to Index X
 A -> X
@@ -736,6 +787,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	TAX|	AA|	1|	2  
 ## TAY
+[back](InstructionsType.md#transfer-operations)
 ```
 Transfer Accumulator to Index Y
 A -> Y
@@ -748,6 +800,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	TAY|	A8|	1|	2  
 ## TSX
+[back](InstructionsType.md#transfer-operations)
 ```
 Transfer Stack Pointer to Index X
 SP -> X
@@ -760,6 +813,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	TSX|	BA|	1|	2  
 ## TXA
+[back](InstructionsType.md#transfer-operations)
 ```
 Transfer Index X to Accumulator
 X -> A
@@ -772,6 +826,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	TXA|	8A|	1|	2  
 ## TXS
+[back](InstructionsType.md#transfer-operations)
 ```
 Transfer Index X to Stack Register
 X -> SP
@@ -784,6 +839,7 @@ NZCIDV
 | --- | --- | --- | --- | --- |
 |implied|	TXS|	9A|	1|	2  
 ## TYA
+[back](InstructionsType.md#transfer-operations)
 ```
 Transfer Index Y to Accumulator
 Y -> A

@@ -2,10 +2,8 @@ alloc a: $04
 
 alloc arr[20]
 
-// Constant one
-define one: 1
 
-LDA one
+LDA #1
 STA a
 LDA #0
 

@@ -3,7 +3,7 @@ alloc b[2]
 alloc c[4]
 alloc t[4]
 
-//load 04 E8 AC D3
+//load 63 E8 AC D3
 LDA #$D3
 STA a,0
 LDA #$AC
