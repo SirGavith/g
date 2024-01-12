@@ -8,7 +8,7 @@ class CustomError extends Error {
 }
 export class AssemblerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name } }
 
-type AssemblyLine = [string, number] // string, originalIndex
+type AssemblyLine = [string, number] // string, originalLineIndex
 
 function ParseNumber(number: string, oi: number): number {
     if (number === '')
@@ -38,7 +38,7 @@ function RemoveSpaces(s: string): string {
 }
 
 export function Assemble(rawAssembly: string, filePath: string): Buffer {
-    const machineCode = Buffer.alloc(0x10000)
+    const machineCode = Buffer.alloc(0x8000)
     //do a thing
     // Split and remove comments
     const assembly: AssemblyLine[] = rawAssembly
@@ -89,6 +89,8 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
         // loads
         {
             const loads = assembly.filter(l => l[0].startsWith('load '))
+            if (loads.length > 0) throw new AssemblerError(`Loads are turned off rn ${loads[1][1]}`)
+
             if (loads.length > 1) throw new AssemblerError(`Only one load can be in a file; line ${loads[1][1]}`)
             if (loads.length === 1) {
                 const load = loads[0][0].split(' ')
@@ -167,7 +169,22 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                 defineMapping.set(identifier, v)
             })
     }
-    // List of label identifiers, we don't yet know thier positions
+    // Mapping between defineAddress identifiers and their definitions
+    const defineAddressMapping = new Map<string, number>()
+    {
+        assembly
+            .filter(l => l[0].startsWith('defineAddress '))
+            .forEach(([l, oi]) => {
+                const [identifier, value] = l.slice(7).split(':')
+                    .map(s => s.trim())
+                const v = ParseNumber(value, oi)
+                if (v >= 0x10000)
+                    throw new AssemblerError(`Define on line ${oi} has value over 0xFFFF`)
+                tryAddIdentifier(identifier, oi)
+                defineAddressMapping.set(identifier, v)
+            })
+    }
+    // List of label identifiers, we don't yet know their positions
     const labels = new Set<string>()
     {
         assembly.filter(l => l[0].startsWith('@'))
@@ -236,6 +253,10 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
         else { //not a label, write operand
             let operandValue: number | null | undefined = undefined
                 //null is no operand; undefined is not yet defined
+
+            if (defineAddressMapping.has(operand)) {
+                operandValue = defineAddressMapping.get(operand)!
+            }
 
             if (operand === undefined) {
                 if (!instructionSignatures.has(AddressModes.Implied)) {
@@ -346,13 +367,13 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                     throw new AssemblerError(`Instruction ${instruction} is only a byte, ${operandValue} is too big (line ${oi})`)
                 if (operandValue >= 0x10000)
                     throw new AssemblerError(`Instruction ${instruction} is only two bytes, ${operandValue} is too big (line ${oi})`)
-                machineCode[nextAvailableCodeByte + 1] = operandValue & 0xFF
+                machineCode[(nextAvailableCodeByte + 1) - CodeVector] = operandValue & 0xFF
                 if (operandValue >= 0x100) {
-                    machineCode[nextAvailableCodeByte + 2] = (operandValue & 0xFF00) >> 8
+                    machineCode[(nextAvailableCodeByte + 2) - CodeVector] = (operandValue & 0xFF00) >> 8
                 }
             }
         }
-        machineCode[nextAvailableCodeByte] = instructionSignatures.get(addressMode)!
+        machineCode[nextAvailableCodeByte - CodeVector] = instructionSignatures.get(addressMode)!
         nextAvailableCodeByte += AddressModeByteLengths.get(addressMode)!
     }
     //Apply label mappings for jump and branch
@@ -360,8 +381,8 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
         const labelPos = labelDefinitions.get(identifier)
         if (labelPos === undefined) throw new Error
 
-        machineCode[opcodePosition + 1] = labelPos & 0xFF
-        machineCode[opcodePosition + 2] = (labelPos & 0xFF00) >> 8
+        machineCode[opcodePosition + 1 - CodeVector] = labelPos & 0xFF
+        machineCode[opcodePosition + 2 - CodeVector] = (labelPos & 0xFF00) >> 8
     }
     for (const [identifier, opcodePosition] of labelBranchReferences) { // TODO keep line numbers along to here for error
         const labelPos = labelDefinitions.get(identifier)
@@ -372,11 +393,11 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
             throw new AssemblerError(`Branch relative position is too high; identifier is ${identifier}`)
         }
         // 8-bit signed (twos compliment)
-        machineCode[opcodePosition + 1] = relativePosition & 0xFF
+        machineCode[opcodePosition + 1 - CodeVector] = relativePosition & 0xFF
     }
 
-    machineCode[ResetVector_HI] = 0x80
-    machineCode[ResetVector_LO] = 0x00
+    machineCode[ResetVector_HI - CodeVector] = 0x80
+    machineCode[ResetVector_LO - CodeVector] = 0x00
 
     return machineCode
 }

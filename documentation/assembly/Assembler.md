@@ -20,6 +20,10 @@
     - Use define to define immidiate constants in the code
     - Syntax is `define b: 2` to define `b` to the value `2`
     - Using `b` looks like `STA b` but works like `STA #b`
+- `defineAddress` defines an identifier to the associated address
+  - Use defineAddress to define outputs to write to
+  - Syntax is `defineAddress DATA_DIRECTION_B: $6002`
+  - Usage is `STA DATA_DIRECTION_B` to write `A` to `$6002`
 - `load` loads a file (relative to the .ga file) into rom
   - Syntax is `load './file.txt' into myData along myDatalen`
   - Data is loaded starting at `$A000`, which is `alloc`d as `myData`
