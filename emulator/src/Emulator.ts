@@ -1,4 +1,5 @@
 import { AddressModeByteLengths, AddressModes, InstructionOpcodes, InstructionSignature, ResetVector_HI, ResetVector_LO } from '../../shared/Constants'
+import * as Console from '../../shared/Console'
 
 class CustomError extends Error {
     constructor(...message: any[]) { super(message.map(m => String(m)).join(' ')); this.name = this.constructor.name }
@@ -7,7 +8,7 @@ class CustomError extends Error {
 export class RuntimeError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name } }
 
 export class Emu6502 {
-    public Storage = new Uint8Array(0xFFFF)
+    public Storage = new Uint8Array(0x10000)
     public Debug = false
     public Running = true
     Cycles = 0
@@ -67,8 +68,8 @@ export class Emu6502 {
                 ' Disassembled |' +
                 ' A  X  Y  SP |' +
                 ' NV-BDIZC |' +
-                ' Zpage |' +
-                ' $200 - $210 '
+                // ' Zpage |' +
+                ' $6000 - $6010 '
             )
         }
 
@@ -155,32 +156,40 @@ export class Emu6502 {
         this.Instructions[opcode]()
 
         if (this.Debug) {
-            const zWatchArr = [], sWatchArr = [], watchArr = []
+            const zWatchArr = [], sWatchArr = [], watchArr = [], oWatchArr = []
             for (const val of this.Storage.slice(0x00, 0x02)) {
                 zWatchArr.push(this.ToString(val, 2, 16))
             }
             for (const val of this.Storage.slice(0x1FB, 0x200)) {
                 sWatchArr.push(this.ToString(val, 2, 16))
             }
+            for (const val of this.Storage.slice(0x6000, 0x6010)) {
+                oWatchArr.push(this.ToString(val, 2, 16))
+            }
             for (const val of this.Storage.slice(0x200, 0x210)) {
                 watchArr.push(this.ToString(val, 2, 16))
             }
             console.log(
-                this.ToString(this.Cycles, 7, 16) + ' | ' +
-                counterString.padStart(4, '0') + ' | ' +
+                this.Cycles.toString(16).padStart(7) + ' | ' +
+                Console.Green + 
+                counterString.padStart(4, '0') +
+                Console.Reset + ' | ' +
+                Console.Red +
                 instructionBytes
                     .map(b => b.toString(16).padStart(2, '0'))
-                    .join(' ').padEnd(8, ' ') + ' | '+
-                (instString + ' ' + disass).padEnd(13, ' ') + ' | ' +
-                this.ToString(this.A , 2, 16) + ' ' +
-                this.ToString(this.X , 2, 16) + ' ' +
-                this.ToString(this.Y , 2, 16) + ' ' +
+                    .join(' ').padEnd(8, ' ') + Console.Reset + ' | ' +
+                Console.Cyan + instString + ' ' + Console.Yellow + (disass!).padEnd(9, ' ') +
+                Console.Reset + ' | ' +
+                this.ToString(this.A , 2, 16, Console.Yellow) + ' ' +
+                this.ToString(this.X , 2, 16, Console.Blue) + ' ' +
+                this.ToString(this.Y , 2, 16, Console.Red) + ' ' +
                 this.ToString(this.SP, 2, 16) + ' | ' +
                 this.ToString(this.SR, 8,  2) + ' | ' +
                 //watches
-                zWatchArr.join(',') + ' | ' +
+                // zWatchArr.join(',') + ' | ' +
                 // sWatchArr.join(',') + ' | ' +
-                watchArr.join(',')
+                // watchArr.join(',')
+                oWatchArr.join(',')
             )
         }
     }
@@ -207,7 +216,20 @@ export class Emu6502 {
     private ToMultiString(n: number) {
         return `0b${n.toString(2)}  ${n.toString(10)}  \$${n.toString(16)}`
     }
-    private ToString(n: number, length: number, base: number): string {
+    private ToString(n: number, length: number, base: number, color?: string): string {
+        if (base === 2) {
+            return [...n.toString(base).padStart(length, '0')].map(bit => {
+                if (bit === '0') {
+                    return Console.Dim + bit + Console.Reset
+                }
+                return Console.White + bit + Console.Reset
+            }).join('')
+        }
+        if (n === 0) color = Console.Dim
+
+        if (color !== undefined) {
+            return color + n.toString(base).padStart(length, '0') + Console.Reset
+        }
         return n.toString(base).padStart(length, '0')
     }
     //#endregion

@@ -11,6 +11,6 @@ const outFileName = inFileName.slice(0, -1) + 'bin'
 let lines = fs.readFileSync(inFileName, 'utf8')
     .replaceAll('\r', '')
 
-const storage = Assemble(lines, args[1])
+const ROM = Assemble(lines, args[1])
 
-fs.writeFile(outFileName, storage, err => { if (err) console.log(err) })
+fs.writeFile(outFileName, ROM, err => { if (err) console.log(err) })

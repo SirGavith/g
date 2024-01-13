@@ -13,20 +13,21 @@ if (!fileName.endsWith('.ga')) throw new Error('Can only assemble .ga or files')
 let lines = fs.readFileSync(fileName, 'utf8')
     .replaceAll('\r', '')
 
-const storage = Assemble(lines, args[1])
+const ROM = Assemble(lines, args[1])
 
-fs.writeFile(fileName.slice(0, -2) + 'gbin',
-    storage, err => { if (err) console.log(err) })
+fs.writeFileSync(fileName.slice(0, -2) + 'gbin', ROM)
 
 const cpu = new Emu6502()
 
 cpu.Storage = new Uint8Array(0x10000)
-storage.copy(cpu.Storage)
+ROM.copy(cpu.Storage, 0x8000)
 
 
 const loadTime = process.hrtime(loadStartTime)
 console.log(`Loaded in ${loadTime[0]}s ${loadTime[1] / 10 ** 6}ms`)
 const runStartTime = process.hrtime();
+
+cpu.Debug = true
 
 cpu.Execute()
 

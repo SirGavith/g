@@ -30,7 +30,7 @@ function ParseNumber(number: string, oi: number): number {
 }
 
 function IsValidIdentifier(s: string): boolean {
-    return /^\w[-\w\d]*$/.test(s)
+    return /^\w[-_\w\d]*$/.test(s)
 }
 
 function RemoveSpaces(s: string): string {
@@ -153,7 +153,22 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                 if (position === undefined)
                     nextAvailableAllocByte += allocLength
             })
-    }   
+    }
+    // Mapping between defineAddress identifiers and their definitions
+    const defineAddressMapping = new Map<string, number>()
+    {
+        assembly
+            .filter(l => l[0].startsWith('defineAddress '))
+            .forEach(([l, oi]) => {
+                const [identifier, value] = l.slice(14).split(':')
+                    .map(s => s.trim())
+                const v = ParseNumber(value, oi)
+                if (v >= 0x10000)
+                    throw new AssemblerError(`Define on line ${oi} has value over 0xFFFF`)
+                tryAddIdentifier(identifier, oi)
+                defineAddressMapping.set(identifier, v)
+            })
+    }
     // Mapping between define identifiers and their definitions
     const defineMapping = new Map<string, number>()
     {
@@ -167,21 +182,6 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                     throw new AssemblerError(`Define on line ${oi} has value over 255; Immidiates must be only a byte`)
                 tryAddIdentifier(identifier, oi)
                 defineMapping.set(identifier, v)
-            })
-    }
-    // Mapping between defineAddress identifiers and their definitions
-    const defineAddressMapping = new Map<string, number>()
-    {
-        assembly
-            .filter(l => l[0].startsWith('defineAddress '))
-            .forEach(([l, oi]) => {
-                const [identifier, value] = l.slice(7).split(':')
-                    .map(s => s.trim())
-                const v = ParseNumber(value, oi)
-                if (v >= 0x10000)
-                    throw new AssemblerError(`Define on line ${oi} has value over 0xFFFF`)
-                tryAddIdentifier(identifier, oi)
-                defineAddressMapping.set(identifier, v)
             })
     }
     // List of label identifiers, we don't yet know their positions
@@ -204,7 +204,8 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
     for (const [line, oi] of assembly) {
         if (line.startsWith('alloc ') ||
             line.startsWith('load ') ||
-            line.startsWith('define ')) continue
+            line.startsWith('defineAddress ') ||
+        line.startsWith('define ')) continue
         if (line.startsWith('@')) { // label
             const identifier = line.slice(1).split(' ')[0].trim()
             labelDefinitions.set(identifier, nextAvailableCodeByte)
@@ -253,10 +254,6 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
         else { //not a label, write operand
             let operandValue: number | null | undefined = undefined
                 //null is no operand; undefined is not yet defined
-
-            if (defineAddressMapping.has(operand)) {
-                operandValue = defineAddressMapping.get(operand)!
-            }
 
             if (operand === undefined) {
                 if (!instructionSignatures.has(AddressModes.Implied)) {
@@ -341,6 +338,12 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                 operandValue = allocMapping.get(operand)!
                 addressMode = operandValue < 0x100 ?
 					AddressModes.ZeropageR : AddressModes.Absolute
+            }
+            else if (defineAddressMapping.has(operand)) {
+                operandValue = defineAddressMapping.get(operand)!
+                addressMode = AddressModes.Absolute
+                if (!instructionSignatures.has(addressMode))
+                    throw new AssemblerError(`DefineAddresses only work as absolute addresses; line ${oi}`)
             }
             else if (defineMapping.has(operand)) {
                 const m = defineMapping.get(operand)!
