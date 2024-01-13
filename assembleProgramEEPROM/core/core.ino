@@ -113,7 +113,7 @@ void setup()
             Serial.print(".");
         }
     }
-    Serial.println(" done");
+    Serial.println(" Done");
 
     // Program data bytes
     Serial.print("Programming EEPROM");
@@ -130,11 +130,13 @@ void setup()
     writeEEPROM(0x8FFC, resetVector & 0xFF);
     writeEEPROM(0x8FFD, resetVector >> 8);
 
-    Serial.println(" done");
+    Serial.println(" Done");
 
     // Read and print out the contents of the EERPROM
     Serial.println("Reading EEPROM");
     printContents();
+
+    Serial.println("Finished");
 }
 
 void loop()

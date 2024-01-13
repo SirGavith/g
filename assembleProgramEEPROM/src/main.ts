@@ -1,52 +1,55 @@
-import { execSync, spawn, spawnSync } from 'child_process';
+import { execSync } from 'child_process';
 import { Assemble } from '../../assembler/src/Assembler'
+import * as Console from '../../shared/Console'
 import fs from 'fs'
 import path from 'path';
 
-//Assemble current file and program to eeprom
+// Assemble Current File and Program to EEPROM
 
-const loadStartTime = process.hrtime();
 
-const args = process.argv.slice(2)
-const assemblyFilePath = args[0]
-if (!assemblyFilePath.endsWith('.ga')) throw new Error('Can only assemble .ga or files')
+// Find Current File
+const [assemblyFilePath, assemblyFileDir] = process.argv.slice(2)
+if (!assemblyFilePath.endsWith('.ga')) {
+    throw new Error('Can only assemble .ga files')
+}
+console.log(Console.Cyan + 'Assembling', Console.Reset, assemblyFilePath.split('/').slice(-1)[0])
 
-let lines = fs.readFileSync(assemblyFilePath, 'utf8')
-    .replaceAll('\r', '')
+// Read File
+let assembly = fs.readFileSync(assemblyFilePath, 'utf8').replaceAll('\r', '')
 
-const ROM = Assemble(lines, args[1])
+// Assemble File
+const ROM = Assemble(assembly, assemblyFileDir)
 
-fs.writeFileSync(assemblyFilePath.slice(0, -2) + 'gbin', ROM)
+// Write binary (for debugging)
+const binFilePath = assemblyFilePath.slice(0, -2) + 'gbin'
+fs.writeFileSync(binFilePath, ROM)
+console.log(Console.Cyan + 'Assembled. Written to:', Console.Reset, binFilePath.split('/').slice(-1)[0])
 
-console.log(ROM)
+// assembler produces byte[0x8000]; we can only include a little bit of bytecode in the arduino file
+// ideal is to stream that to arduino on serial, but that is hard
 
+
+// Find code part of bin by looking for 10 consecutive 0s
 const machineCode = []
-
 let i = 0;
 for (; i < 0x8000; i++) {
     machineCode.push(ROM[i])
     if (i > 10 && machineCode.slice(-10, -1).every(v => v === 0)) break
 }
 
-console.log(machineCode)
 const byteArrayString = machineCode.slice(0, -8).map(a => '0x' + a.toString(16)).join(',')
-console.log(byteArrayString)
+console.log(machineCode.slice(0, -8).map(a => a.toString(16)).join(' '))
 
-//patch into arduino code
-console.log('Patching Arduino Code')
+// Patch into arduino code
+console.log(Console.Cyan + 'Patching...', Console.Reset)
 
 const arduinoCodePath = path.join(__dirname, '../../../main.ino')
 const arduinoCodeOutPath = path.join(__dirname, '../../../core/core.ino')
 
-const arduinoCode = fs.readFileSync(arduinoCodePath, 'utf-8')
-const newArduinoCode = arduinoCode.replace('const byte data[] = {};', `const byte data[] = { ${byteArrayString} };`)
-fs.writeFileSync(arduinoCodeOutPath, newArduinoCode)
+let arduinoCode = fs.readFileSync(arduinoCodePath, 'utf-8')
+arduinoCode = arduinoCode.replace('const byte data[] = {};', `const byte data[] = { ${byteArrayString} };`)
 
-console.log('Compiling Arduino Code')
-
-
-
-// const ls = spawn('ls', ['-lh', '/usr']);
+fs.writeFileSync(arduinoCodeOutPath, arduinoCode)
 
 // Arduino CLI commands
 const compileCommand = `arduino-cli compile --fqbn arduino:avr:uno ${arduinoCodeOutPath}`;
@@ -54,16 +57,16 @@ const uploadCommand = `arduino-cli upload -p COM3 --fqbn arduino:avr:uno ${ardui
 const monitorCommand = 'arduino-cli monitor -p COM3 --config baudrate=57600';
 
 try {
-    // Execute arduino-cli compile command
-    console.log('Compiling...');
+    // Compile Arduino code
+    console.log(Console.Cyan + 'Compiling...', Console.Reset);
     execSync(compileCommand, { stdio: 'inherit' });
 
-    // Execute arduino-cli upload command
-    console.log('Uploading...');
+    // Upload Arduino code
+    console.log(Console.Cyan + 'Uploading...', Console.Reset);
     execSync(uploadCommand, { stdio: 'inherit' });
 
-    // Execute arduino-cli monitor command
-    console.log('Monitoring...');
+    // Monitor Arduino output
+    console.log(Console.Cyan + 'Monitoring...', Console.Reset);
     execSync(monitorCommand, { stdio: 'inherit' });
 
 } catch (error) {
