@@ -1,11 +1,13 @@
 defineAddress DATA_DIRECTION_B: $6002
 defineAddress OUTPUT_B: $6000
+define foo: $FF
 
-LDA #$FF
+LDA foo
 STA DATA_DIRECTION_B
-@loop
-LDA #$55
+
+LDA #$50
 STA OUTPUT_B
-LDA #$AA
+@loop
+ROR
 STA OUTPUT_B
 JMP loop

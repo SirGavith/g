@@ -1,16 +1,23 @@
 import fs from 'fs'
 import { Assemble, AssemblerError } from './Assembler'
+import * as Console from '../../shared/Console'
+
 
 // Assemble Current File
-const args = process.argv.slice(2)
-const inFileName = args[0]
-if (!inFileName.endsWith('.ga') && !inFileName.endsWith('.gassembly')) throw new AssemblerError('Can only assemble .ga or .gassembly files')
+const [inFilePath, inFileDir] = process.argv.slice(2)
+if (!inFilePath.endsWith('.ga') && !inFilePath.endsWith('.gassembly'))
+    throw new AssemblerError('Can only assemble .ga or .gassembly files')
 
-const outFileName = inFileName.slice(0, -1) + 'bin'
+console.log(Console.Cyan + 'Assembling', Console.Reset, inFilePath.split('/').slice(-1)[0])
 
-let lines = fs.readFileSync(inFileName, 'utf8')
-    .replaceAll('\r', '')
+// Read File
+let assembly = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 
-const ROM = Assemble(lines, args[1])
+// Assemble File
+const [ROM, codeLength] = Assemble(assembly, inFileDir)
 
-fs.writeFile(outFileName, ROM, err => { if (err) console.log(err) })
+// Write binary
+const outFilePath = inFilePath.slice(0, -2) + 'gbin'
+fs.writeFileSync(outFilePath, ROM)
+
+console.log(Console.Cyan + `Assembled ${codeLength} bytes. Written to:`, Console.Reset, outFilePath.split('/').slice(-1)[0])

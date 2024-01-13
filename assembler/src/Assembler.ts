@@ -37,7 +37,7 @@ function RemoveSpaces(s: string): string {
     return s.replaceAll(' ', '')
 }
 
-export function Assemble(rawAssembly: string, filePath: string): Buffer {
+export function Assemble(rawAssembly: string, filePath: string): [Buffer, number] {
     const machineCode = Buffer.alloc(0x8000)
     //do a thing
     // Split and remove comments
@@ -198,7 +198,7 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
     const labelJumpReferences: [string, number][] = [] // identifier, position of opcode
     const labelBranchReferences: [string, number][] = [] // identifier, position of opcode
 
-    let nextAvailableCodeByte = CodeVector
+    let nextAvailableCodeByte = 0
     const labelDefinitions = new Map<string, number>()
     //Loop through each line of assembly
     for (const [line, oi] of assembly) {
@@ -208,7 +208,7 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
         line.startsWith('define ')) continue
         if (line.startsWith('@')) { // label
             const identifier = line.slice(1).split(' ')[0].trim()
-            labelDefinitions.set(identifier, nextAvailableCodeByte)
+            labelDefinitions.set(identifier, nextAvailableCodeByte + CodeVector)
             continue
         }
         const [instruction, operand] = line.split(/ (.*)/, 2).map(s => RemoveSpaces(s))
@@ -235,20 +235,20 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
             if (!labels.has(label)) 
                 throw new AssemblerError(`Instruction 'JMP' on line ${oi} does not reference a label`)
 
-            labelJumpReferences.push([label, nextAvailableCodeByte])
+            labelJumpReferences.push([label, nextAvailableCodeByte + CodeVector])
         }
         else if (instruction === JSRInstruction) {
             if (!labels.has(operand))
                 throw new AssemblerError(`Instruction 'JSR' on line ${oi} does not reference a label`)
 
-            labelJumpReferences.push([operand, nextAvailableCodeByte])
+            labelJumpReferences.push([operand, nextAvailableCodeByte + CodeVector])
             addressMode = AddressModes.Absolute
         } 
         else if (BranchInstructions.includes(instruction)) { // branch
             if (!labels.has(operand))
                 throw new AssemblerError(`Instruction ${instruction} on line ${oi} does not reference a label`)
 
-            labelBranchReferences.push([operand, nextAvailableCodeByte])
+            labelBranchReferences.push([operand, nextAvailableCodeByte + CodeVector])
             addressMode = AddressModes.ZeropageR
         }
         else { //not a label, write operand
@@ -370,13 +370,13 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
                     throw new AssemblerError(`Instruction ${instruction} is only a byte, ${operandValue} is too big (line ${oi})`)
                 if (operandValue >= 0x10000)
                     throw new AssemblerError(`Instruction ${instruction} is only two bytes, ${operandValue} is too big (line ${oi})`)
-                machineCode[(nextAvailableCodeByte + 1) - CodeVector] = operandValue & 0xFF
+                machineCode[nextAvailableCodeByte + 1] = operandValue & 0xFF
                 if (operandValue >= 0x100) {
-                    machineCode[(nextAvailableCodeByte + 2) - CodeVector] = (operandValue & 0xFF00) >> 8
+                    machineCode[nextAvailableCodeByte + 2] = (operandValue & 0xFF00) >> 8
                 }
             }
         }
-        machineCode[nextAvailableCodeByte - CodeVector] = instructionSignatures.get(addressMode)!
+        machineCode[nextAvailableCodeByte] = instructionSignatures.get(addressMode)!
         nextAvailableCodeByte += AddressModeByteLengths.get(addressMode)!
     }
     //Apply label mappings for jump and branch
@@ -402,5 +402,5 @@ export function Assemble(rawAssembly: string, filePath: string): Buffer {
     machineCode[ResetVector_HI - CodeVector] = 0x80
     machineCode[ResetVector_LO - CodeVector] = 0x00
 
-    return machineCode
+    return [machineCode, nextAvailableCodeByte]
 }

@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { Assemble } from '../../assembler/src/Assembler'
+import { Assemble, AssemblerError } from '../../assembler/src/Assembler'
 import * as Console from '../../shared/Console'
 import fs from 'fs'
 import path from 'path';
@@ -8,37 +8,36 @@ import path from 'path';
 
 
 // Find Current File
-const [assemblyFilePath, assemblyFileDir] = process.argv.slice(2)
-if (!assemblyFilePath.endsWith('.ga')) {
-    throw new Error('Can only assemble .ga files')
+const [inFilePath, inFileDir] = process.argv.slice(2)
+if (!inFilePath.endsWith('.ga') && !inFilePath.endsWith('.gassembly')) {
+    throw new AssemblerError('Can only assemble .ga files')
 }
-console.log(Console.Cyan + 'Assembling', Console.Reset, assemblyFilePath.split('/').slice(-1)[0])
+
+console.log(Console.Cyan + 'Assembling', Console.Reset, inFilePath.split('/').slice(-1)[0])
 
 // Read File
-let assembly = fs.readFileSync(assemblyFilePath, 'utf8').replaceAll('\r', '')
+let assembly = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 
 // Assemble File
-const ROM = Assemble(assembly, assemblyFileDir)
+const [ROM, codeLength] = Assemble(assembly, inFileDir)
+console.log(ROM, codeLength)
 
 // Write binary (for debugging)
-const binFilePath = assemblyFilePath.slice(0, -2) + 'gbin'
-fs.writeFileSync(binFilePath, ROM)
-console.log(Console.Cyan + 'Assembled. Written to:', Console.Reset, binFilePath.split('/').slice(-1)[0])
+const outFilePath = inFilePath.slice(0, -2) + 'gbin'
+fs.writeFileSync(outFilePath, ROM)
+
+console.log(Console.Cyan + `Assembled ${codeLength} bytes. Written to:`, Console.Reset, outFilePath.split('/').slice(-1)[0])
 
 // assembler produces byte[0x8000]; we can only include a little bit of bytecode in the arduino file
 // ideal is to stream that to arduino on serial, but that is hard
 
-
-// Find code part of bin by looking for 10 consecutive 0s
+// Stringify machine code part of ROM
 const machineCode = []
-let i = 0;
-for (; i < 0x8000; i++) {
-    machineCode.push(ROM[i])
-    if (i > 10 && machineCode.slice(-10, -1).every(v => v === 0)) break
+for (let i = 0; i < codeLength; i++) {
+    machineCode[i] = '0x' + ROM[i].toString(16)
 }
 
-const byteArrayString = machineCode.slice(0, -8).map(a => '0x' + a.toString(16)).join(',')
-console.log(machineCode.slice(0, -8).map(a => a.toString(16)).join(' '))
+console.log(machineCode.join(' '))
 
 // Patch into arduino code
 console.log(Console.Cyan + 'Patching...', Console.Reset)
@@ -47,7 +46,7 @@ const arduinoCodePath = path.join(__dirname, '../../../main.ino')
 const arduinoCodeOutPath = path.join(__dirname, '../../../core/core.ino')
 
 let arduinoCode = fs.readFileSync(arduinoCodePath, 'utf-8')
-arduinoCode = arduinoCode.replace('const byte data[] = {};', `const byte data[] = { ${byteArrayString} };`)
+arduinoCode = arduinoCode.replace('const byte data[] = {};', `const byte data[] = { ${machineCode.join(',') } };`)
 
 fs.writeFileSync(arduinoCodeOutPath, arduinoCode)
 
