@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
-import { Assemble, AssemblerError } from '../../assembler/src/Assembler'
-import * as Console from '../../shared/Console'
+import { Assemble, AssemblerError } from '../../../../assembler/src/Assembler'
+import * as Console from '../../../../shared/Console'
 import fs from 'fs'
 import path from 'path';
 

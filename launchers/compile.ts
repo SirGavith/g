@@ -1,6 +1,8 @@
 import fs from 'fs'
 import { Assemble, AssemblerError } from './Assembler'
-import * as Console from '../../shared/Console'
+import * as Console from '../shared/Console'
+
+//TEMPLATE
 
 
 // Assemble Current File

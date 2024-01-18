@@ -1,7 +1,7 @@
 import path from "path"
 import fs from 'fs'
 import { AddressModeByteLengths, AddressModes, BranchInstructions, CodeVector, DataVector, InstructionOpcodes, JSRInstruction, JumpInstruction, OutputVector, ResetVector_HI, ResetVector_LO, StackVector, VariablesVector, VectorsVector, ZPageVector } 
-    from "../../shared/Constants"
+    from "../shared/Constants"
 
 class CustomError extends Error {
     constructor(...message: any[]) { super(message.map(m => String(m)).join(' ')); this.name = this.constructor.name }
