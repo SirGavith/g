@@ -1,5 +1,6 @@
 import { AddressModeByteLengths, AddressModes, InstructionOpcodes, InstructionSignature, ResetVector_HI, ResetVector_LO } from '../shared/Constants'
-import * as Console from '../shared/Console'
+import * as Console from 'glib/dist/Console'
+
 
 class CustomError extends Error {
     constructor(...message: any[]) { super(message.map(m => String(m)).join(' ')); this.name = this.constructor.name }

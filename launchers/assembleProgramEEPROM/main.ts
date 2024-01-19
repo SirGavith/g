@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
-import { Assemble, AssemblerError } from '../../../../assembler/src/Assembler'
-import * as Console from '../../../../shared/Console'
+import { Assemble, AssemblerError } from '../../assembler/assembler'
+import * as Console from 'glib/dist/Console'
 import fs from 'fs'
 import path from 'path';
 
@@ -32,7 +32,7 @@ console.log(Console.Cyan + `Assembled ${codeLength} bytes. Written to:`, Console
 // ideal is to stream that to arduino on serial, but that is hard
 
 // Stringify machine code part of ROM
-const machineCode = []
+const machineCode: string[] = []
 for (let i = 0; i < codeLength; i++) {
     machineCode[i] = '0x' + ROM[i].toString(16)
 }

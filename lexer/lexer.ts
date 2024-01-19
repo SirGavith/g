@@ -1,3 +1,9 @@
+import { CustomError } from "../shared/Error"
+import * as glibs from 'glib/dist/String'
+import * as gliba from 'glib/dist/Array'
+
+export class LexerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
+
 export enum Operators {
     And,
     Or,
@@ -166,8 +172,8 @@ function tokenizeExpr(expr: string, identifiers: string[]) {
             }
             break
         }
-        if (!exp.Condition) throw new Error('Could not find while condition ' + rest)
-        if (!exp.Body) throw new Error('Could not find while body ' + rest)
+        if (!exp.Condition) throw new LexerError('Could not find while condition ' + rest)
+        if (!exp.Body) throw new LexerError('Could not find while body ' + rest)
         compound.Expressions.push(exp)
     }
     else if (word === 'while') {
@@ -181,8 +187,8 @@ function tokenizeExpr(expr: string, identifiers: string[]) {
             exp.Body = parseExpr(rest.substring(i + 1), identifiers)
             break
         }
-        if (!exp.Condition) throw new Error('Could not find while condition ' + rest)
-        if (!exp.Body) throw new Error('Could not find while body ' + rest)
+        if (!exp.Condition) throw new LexerError('Could not find while condition ' + rest)
+        if (!exp.Body) throw new LexerError('Could not find while body ' + rest)
         compound.Expressions.push(exp)
     }
     else if (word === 'true' && rest === '') {

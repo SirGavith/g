@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "@types/node": "^18.11.18"
+  },
+  "dependencies": {
+    "glib": "file:../glib"
   }
 }

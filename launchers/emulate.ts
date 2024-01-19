@@ -1,5 +1,6 @@
 import fs from 'fs'
-import { Emu6502, RuntimeError } from './Emulator'
+import { Emu6502, RuntimeError } from '../emulator/emulator'
+import * as Console from 'glib/dist/Console'
 
 // Emulate Current File
 const inFileName = process.argv[2]

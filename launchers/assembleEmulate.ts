@@ -1,7 +1,7 @@
-import { Assemble, AssemblerError } from '../../assembler/src/Assembler'
-import { Emu6502 } from '../../emulator/src/Emulator'
 import fs from 'fs'
-import * as Console from '../../shared/Console'
+import { Assemble, AssemblerError } from '../assembler/assembler'
+import { Emu6502 } from '../emulator/emulator'
+import * as Console from 'glib/dist/Console'
 
 
 //Assemble and run current file

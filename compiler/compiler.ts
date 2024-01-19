@@ -1,11 +1,12 @@
-import { Word, instructionsMU0 } from './Emulator'
+// import { Word, instructionsMU0 } from './Emulator'
 import { Expression, ExpressionTypes, Lexer, OperationExpression, Operators, VariableExpression } from './Lexer';
-import { CustomError } from '../Glib/Error';
+import { CustomError } from "../shared/Error"
+
 
 export class CompilerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
 
 function PreAssemble(c: string) {
-    const code = c.SplitLines().filter(l => l.RegexTest(/\s*/)).map(l => l.trim())
+    const code = c.split('/n').filter(l => l.RegexTest(/\s*/)).map(l => l.trim())
     //generate assembly for assembly lines
     
     const assembly = code.filter(line => line.split(' ').some(s => instructionsMU0.includes(s))),

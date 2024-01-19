@@ -1,6 +1,6 @@
 import fs from 'fs'
-import { Assemble, AssemblerError } from '../../assembler/src/Assembler'
-import * as Console from '../../shared/Console'
+import { Assemble, AssemblerError } from '../assembler/assembler'
+import * as Console from 'glib/dist/Console'
 
 
 // Assemble Current File

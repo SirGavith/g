@@ -2,10 +2,8 @@ import path from "path"
 import fs from 'fs'
 import { AddressModeByteLengths, AddressModes, BranchInstructions, CodeVector, DataVector, InstructionOpcodes, JSRInstruction, JumpInstruction, OutputVector, ResetVector_HI, ResetVector_LO, StackVector, VariablesVector, VectorsVector, ZPageVector } 
     from "../shared/Constants"
+import { CustomError } from "../shared/Error"
 
-class CustomError extends Error {
-    constructor(...message: any[]) { super(message.map(m => String(m)).join(' ')); this.name = this.constructor.name }
-}
 export class AssemblerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name } }
 
 type AssemblyLine = [string, number] // string, originalLineIndex
