@@ -8,6 +8,17 @@
   - 1 byte
   - Initialized to `0`
 
+## Assembly
+``` 
+assembly {
+    defineAddress DATA_DIRECTION_B: $6002
+    defineAddress OUTPUT_B: $6000
+
+    LDA $FF
+    STA DATA_DIRECTION_B
+}
+```
+
 ## Literals
 - Number literals produce bytes
 - Char literals produce a byte of their ASCII
@@ -26,15 +37,8 @@
 
 ## Variables
 ```
-byte b;
-byte c = 20;
-c = 10
-```
-
-## Defines
-- Replaces all occurances of the identifier within the scope with the value
-```
-def byte b = 10;
+let byte b;
+let byte c = 20;
 ```
 
 ## Operators
@@ -71,7 +75,7 @@ def byte b = 10;
 - Functions are not in a class
 - Functions are defined with `func`
 ```
-func isZero(byte a): Bool {
+func bool isZero(byte a) {
     if (a == 0) {
         return true
     }

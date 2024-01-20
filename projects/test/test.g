@@ -1,10 +1,9 @@
-let: a = 4,
-    b = 1;
+let byte a = 4;
+let byte b = 1;
 
 if (a > b) {
     a++;
 }
-
 else {
     a--;
 };

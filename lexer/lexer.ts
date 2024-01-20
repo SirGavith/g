@@ -7,9 +7,8 @@ export class LexerError extends CustomError { constructor(...message: any[]) { s
 
 
 export function Lexer(c: string) {
-    const code = c.replaceAll(/\s+/g, '').Log()
+    const code = c.replaceAll(/\s+/g, ' ').Log()
 
-    // let:a=4,b=1;if(a>b){a++;}else{a--;};b+=a;while(b>0){b--;};
 
     return parseExpr(code, [])
 }
@@ -27,7 +26,7 @@ function parseExpr(code: string, identifiers: string[]): Expression {
             if (i === code.length - 1) i++
             let expr = code.substring(lastsemi, i)
             if (expr.endsWith(';')) expr = expr.slice(0, -1)
-            compound.Expressions.push(tokenizeExpr(expr, identifiers))
+            compound.Expressions.push(tokenizeExpr(expr.trim(), identifiers))
             lastsemi = i + 1
         }
     }
@@ -42,36 +41,36 @@ function tokenizeExpr(expr: string, identifiers: string[]) {
     // b+=a
     // while(b>0){b--;}
 
-    let word, rest
-    for (const [char, i] of expr.toArray().WithIndices()) {
+    let keyword: string | undefined
+    let rest: string | undefined
+    expr.forEach((char, i) => {
         if (char.RegexTest(/\W/g)) {
-            word = expr.slice(0, i)
-            rest = expr.slice(i)
-            break
+            keyword = expr.slice(0, i)
+            rest = expr.slice(i).trim()
+            return true
         }
-    }
-    if (!word || !rest) {
-        word = expr
+    })
+    if (!keyword || !rest) {
+        keyword = expr
         rest = ''
     }
 
-    if (word === 'let') {
+    if (keyword === 'let') {
         const exp = new DeclarationExpression
-        expr.slice(4).split(',').map(p => p.split('=')).forEach(decl => {
-            const id = decl[0]
-            if (decl.length === 1) {
-                identifiers.push(id)
-                exp.Identifiers.push(id)
-            }
-            else if (decl.length === 2) {
-                identifiers.push(id)
-                exp.Identifiers.push(id)
-                exp.Initializers[id] = parseExpr(decl[1], identifiers)
-            }
-        })
+        const [declaration, initializer] = rest.split('=')
+        const [type, identifier] = declaration.split(' ')
+
+        identifiers.push(identifier)
+        exp.Identifier = identifier
+        exp.Type = type
+
+        if (initializer !== undefined) {
+            exp.Initializer = parseExpr(initializer, identifiers)
+        }
+        
         compound.Expressions.push(exp)
     }
-    else if (word === 'if') {
+    else if (keyword === 'if') {
         const exp = new IfExpression
         let parenDepth = 0
         for (const [char, i] of rest.toArray().WithIndices()) {
@@ -93,7 +92,7 @@ function tokenizeExpr(expr: string, identifiers: string[]) {
         if (!exp.Body) throw new LexerError('Could not find while body ' + rest)
         compound.Expressions.push(exp)
     }
-    else if (word === 'while') {
+    else if (keyword === 'while') {
         const exp = new WhileExpression
         let parenDepth = 0
         for (const [char, i] of rest.toArray().WithIndices()) {
@@ -108,24 +107,24 @@ function tokenizeExpr(expr: string, identifiers: string[]) {
         if (!exp.Body) throw new LexerError('Could not find while body ' + rest)
         compound.Expressions.push(exp)
     }
-    else if (word === 'true' && rest === '') {
+    else if (keyword === 'true' && rest === '') {
         const exp = new LiteralExpression
         exp.Value = 1
         compound.Expressions.push(exp)
     }
-    else if (word === 'false' && rest === '') {
+    else if (keyword === 'false' && rest === '') {
         const exp = new LiteralExpression
         exp.Value = 0
         compound.Expressions.push(exp)
     }
-    else if (!word.RegexTest(/\D+/g) && rest === '') {
+    else if (!keyword.RegexTest(/\D+/g) && rest === '') {
         const exp = new LiteralExpression
-        exp.Value = word.toInt()
+        exp.Value = keyword.toInt()
         compound.Expressions.push(exp)
     }
-    else if (identifiers.includes(word) && rest === '') {
+    else if (identifiers.includes(keyword) && rest === '') {
         const exp = new VariableExpression
-        exp.Identifier = word
+        exp.Identifier = keyword
         compound.Expressions.push(exp)
     }
     else {
