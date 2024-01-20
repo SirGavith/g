@@ -1,4 +1,4 @@
-import { AddressModeByteLengths, AddressModes, InstructionOpcodes, InstructionSignature, ResetVector_HI, ResetVector_LO } from '../shared/Constants'
+import { AddressModeByteLengths, AddressModes, InstructionOpcodes, InstructionSignature, ResetVector_HI, ResetVector_LO } from '../shared/cpuconstants'
 import * as Console from 'glib/dist/Console'
 
 

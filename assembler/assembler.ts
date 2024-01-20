@@ -1,8 +1,8 @@
 import path from "path"
 import fs from 'fs'
 import { AddressModeByteLengths, AddressModes, BranchInstructions, CodeVector, DataVector, InstructionOpcodes, JSRInstruction, JumpInstruction, OutputVector, ResetVector_HI, ResetVector_LO, StackVector, VariablesVector, VectorsVector, ZPageVector } 
-    from "../shared/Constants"
-import { CustomError } from "../shared/Error"
+    from "../shared/cpuconstants"
+import { CustomError } from 'glib/dist/Error'
 
 export class AssemblerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name } }
 

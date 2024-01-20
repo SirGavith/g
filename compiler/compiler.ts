@@ -1,6 +1,6 @@
 // import { Word, instructionsMU0 } from './Emulator'
 import { Expression, ExpressionTypes, Lexer, OperationExpression, Operators, VariableExpression } from './Lexer';
-import { CustomError } from "../shared/Error"
+import { CustomError } from 'glib/dist/Error'
 
 
 export class CompilerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
