@@ -1,15 +1,13 @@
-def byte true = 1;
-def byte false = 0;
+let byte true = 1;
+let byte false = 0;
 
-struct bool_struct {
+struct bool {
     byte value
 };
 
-class bool : bool_struct {
-    operator '==' (bool a, bool b): bool {
-        if (a.value == b.value) {
-            return true;
-        }
-        return false;
-    }
-}
+operator == bool (bool a, bool b) {
+    if (a.value == b.value) {
+        return true;
+    };
+    return false;
+};

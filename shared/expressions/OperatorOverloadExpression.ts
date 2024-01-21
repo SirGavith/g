@@ -1,15 +1,17 @@
 import { Expression, ExpressionTypes } from "../../lexer/expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
+import { Operators, operatorMappings } from "../../lexer/operators"
 
 export interface FuncParameter {
     Type: string
     Identifier: string
 }
 
-export class FuncExpression extends Expression {
-    override ExpressionType: ExpressionTypes.Func = ExpressionTypes.Func
-    Identifier?: string
-    ReturnType?: string
+export class OperatorOverloadExpression extends Expression {
+    override ExpressionType: ExpressionTypes.OperatorOverload = ExpressionTypes.OperatorOverload
+
+    ReturnType: string
+    Operator: Operators
     Parameters: FuncParameter[] = []
     Body?: Expression
 
@@ -18,17 +20,24 @@ export class FuncExpression extends Expression {
         if (rest === undefined) 
             throw new LexerError('could not find func body')
 
-        this.ReturnType = rest.slice(0, rest.indexOf(' '))
+        const spacePos = rest.indexOf(' ')
+
+        this.Operator = operatorMappings[rest.slice(0, spacePos)]
+
+        rest = rest.slice(spacePos + 1)
+
+        const lParenIndex = rest.indexOf('(')
+
+        this.ReturnType = rest.slice(0, lParenIndex).trim()
+
         if (!isValidIdentifier(this.ReturnType)) {
             throw new LexerError(`return type '${this.ReturnType}' is invalid`)
         }
-        rest = rest.slice(this.ReturnType.length).trim()
-        this.Identifier = rest.slice(0, rest.indexOf('('))
-        if (!isValidIdentifier(this.Identifier)) {
-            throw new LexerError(`type '${this.Identifier}' is invalid`)
-        }
-        rest = rest.slice(this.Identifier.length + 1).trim()
+
+        rest = rest.slice(lParenIndex + 1).trim()
+
         const rightParenIndex = rest.indexOf(')')
+
         rest.slice(0, rightParenIndex).split(',').forEach(pair => {
             if (!pair) return
             const [type, identifier] = pair.trim().split(' ')

@@ -55,3 +55,5 @@ export const unaryPostfixes: [string, Operators][] = [
     ['++', Operators.Increment],
     ['--', Operators.Decrement],
 ]
+
+export const operatorMappings = binaries.concat(unaryPrefixes, unaryPostfixes).toObject() as {[key: string]: Operators}

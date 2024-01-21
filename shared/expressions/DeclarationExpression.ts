@@ -15,8 +15,7 @@ export class DeclarationExpression extends Expression {
         
         const eqIndex = rest.indexOf('=')
 
-
-        const [type, identifier] = rest.slice(0, eqIndex).trim().split(' ').map(s => s.trim())
+        const [type, identifier] = (eqIndex === -1 ? rest : rest.slice(0, eqIndex)).trim().split(' ').map(s => s.trim())
 
         const initializer = rest.slice(eqIndex + 1).trim()
 
@@ -30,7 +29,7 @@ export class DeclarationExpression extends Expression {
         this.Identifier = identifier
         this.Type = type
 
-        if (initializer !== undefined) {
+        if (eqIndex !== -1) {
             try {
                 this.Initializer = parseExpr(initializer)
             }

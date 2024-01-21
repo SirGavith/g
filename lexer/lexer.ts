@@ -10,6 +10,9 @@ import { StructExpression, } from '../shared/expressions/StructExpression'
 import { FuncExpression } from '../shared/expressions/FuncExpression'
 import { FuncCallExpression } from '../shared/expressions/FuncCallExpression'
 import { LiteralExpression } from '../shared/expressions/LiteralExpression'
+import { ClassExpression } from '../shared/expressions/ClassExpression'
+import { ReturnExpression } from '../shared/expressions/ReturnExpression'
+import { OperatorOverloadExpression } from '../shared/expressions/OperatorOverloadExpression'
 
 
 export class LexerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
@@ -63,23 +66,32 @@ function tokenizeExpr(expr: string) {
     let keyword = groups?.at(1) ?? expr
     let rest = groups?.at(2)?.trim() || undefined
 
-    if (keyword === 'let') {
+    if (keyword === 'asm') {
+        compound.Expressions.push(new AsmExpression(rest))
+    }
+    else if (keyword === 'class') {
+        compound.Expressions.push(new ClassExpression(rest))
+    }
+    else if (keyword === 'let') {
         compound.Expressions.push(new DeclarationExpression(rest))
+    }
+    else if (keyword === 'func') {
+        compound.Expressions.push(new FuncExpression(rest))
     }
     else if (keyword === 'if') {
         compound.Expressions.push(new IfExpression(rest))
     }
-    else if (keyword === 'while') {
-        compound.Expressions.push(new WhileExpression(rest))
+    else if (keyword === 'operator') {
+        compound.Expressions.push(new OperatorOverloadExpression(rest))
+    }
+    else if (keyword === 'return') {
+        compound.Expressions.push(new ReturnExpression(rest))
     }
     else if (keyword === 'struct') {
         compound.Expressions.push(new StructExpression(rest))
     }
-    else if (keyword === 'asm') {
-        compound.Expressions.push(new AsmExpression(rest))
-    }
-    else if (keyword === 'func') {
-        compound.Expressions.push(new FuncExpression(rest))
+    else if (keyword === 'while') {
+        compound.Expressions.push(new WhileExpression(rest))
     }
     // else if (keyword === 'true' && rest === '') {
     //     const exp = new LiteralExpression

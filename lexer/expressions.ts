@@ -12,6 +12,8 @@ export enum ExpressionTypes {
     Asm,        // asm
     Func,       // func
     Return,     // return
+    Class,      // class
+    OperatorOverload, // operator
 }
 
 // export type Expression = CompoundExpression | DeclarationExpression | IfExpression | LiteralExpression | OperationExpression | VariableExpression | WhileExpression
