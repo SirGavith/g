@@ -19,8 +19,7 @@ console.log(Console.Cyan + 'Lexing', Console.Reset, inFilePath.split('/').slice(
 let file = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 {
     const expression = Lexer(file)
-    console.dir(expression)
-    throw new LexerError
+    expression.Log()
 }
 
 

@@ -15,5 +15,10 @@ let byte val = 0x50;
 
 while (true) {
     write(val, OUTPUT_B);
-    val = val >> 1;
+    val = (val >> 1);
 };
+
+//expressiontype: CYAN
+//identifiers: RED
+//type: MAGENTA
+//literal: YELLOW

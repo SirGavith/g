@@ -1,5 +1,6 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, parseExpr } from "../../lexer/lexer"
+import * as Console from 'glib/dist/Console'
 
 export interface Method {
 
@@ -20,5 +21,12 @@ export class ClassExpression extends Expression {
 
         throw new LexerError('classes not implemented')
         
+    }
+
+    override Log(indent = 0) {
+        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier + Console.Reset} : ${Console.Magenta + this.Struct + Console.Reset}`)
+        // this.Methods?.forEach(m => {
+        //     m.Log(indent + 1)
+        // })
     }
 }

@@ -1,11 +1,12 @@
 import { LexerError, isValidIdentifier, parseExpr } from '../../lexer/lexer'
 import { Expression, ExpressionTypes } from './Expressions'
+import * as Console from 'glib/dist/Console'
 
 
 export class DeclarationExpression extends Expression {
     override ExpressionType: ExpressionTypes.Declaration = ExpressionTypes.Declaration
-    Identifier?: string
-    Type?: string
+    Identifier: string
+    Type: string
     Initializer?: Expression
 
     constructor(rest?: string) {
@@ -30,16 +31,15 @@ export class DeclarationExpression extends Expression {
         this.Type = type
 
         if (eqIndex !== -1) {
-            try {
-                this.Initializer = parseExpr(initializer)
-            }
-            catch (e) {
-                console.error(e)
-                throw new LexerError('declaration parsing failed')
-            }
+            this.Initializer = parseExpr(initializer)
         }
 
         if (this.Identifier === undefined)
             throw new LexerError('declaration must contain identifier')
+    }
+
+    override Log(indent = 0) {
+        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier} ${Console.Magenta + this.Type + Console.Reset}${this.Initializer ? ':' : ''}`)
+        this.Initializer?.Log(indent + 1)
     }
 }

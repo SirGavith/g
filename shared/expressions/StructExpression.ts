@@ -1,10 +1,11 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { DeclarationExpression } from "./DeclarationExpression"
 import { parseExpr, LexerError } from "../../lexer/lexer"
+import * as Console from 'glib/dist/Console'
 
 export class StructExpression extends Expression {
-    override ExpressionType: ExpressionTypes.While = ExpressionTypes.While
-    Identifier?: string
+    override ExpressionType: ExpressionTypes.Struct = ExpressionTypes.Struct
+    Identifier: string
     Members: DeclarationExpression[] = []
 
     constructor(rest?: string) {
@@ -32,5 +33,12 @@ export class StructExpression extends Expression {
 
         if (this.Members.length === 0)
             throw new LexerError('Could not find struct members ' + rest)
+    }
+
+    override Log(indent = 0) {
+        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier + Console.Reset}:`)
+        this.Members.forEach(m => {
+            m.Log(indent + 1)
+        })
     }
 }

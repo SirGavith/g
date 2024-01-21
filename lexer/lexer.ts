@@ -19,7 +19,7 @@ import { WhileExpression, } from '../shared/expressions/WhileExpression'
 
 export class LexerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
 
-export function Lexer(c: string) {
+export function Lexer(c: string): Expression {
     const code = c.SplitLines()
         .map(l => l.includes('//') ? l.slice(0, l.indexOf('//')) : l)
         .join('')
@@ -35,7 +35,8 @@ export function isValidIdentifier(identifier: string): boolean {
 export function forEachScopedExprOnDelim(code: string, delim: string, lambda: (s: string, i: number) => boolean | void) {
     let lastDelimIndex = 0
     let exprLevel = 0
-    code.forEach((char, i) => {
+    for (let i = 0; i < code.length; i++) {
+        const char = code.charAt(i)
         if      (char === '{' || char === '(' || char === '[') exprLevel++
         else if (char === '}' || char === ')' || char === ']') exprLevel--
 
@@ -44,14 +45,15 @@ export function forEachScopedExprOnDelim(code: string, delim: string, lambda: (s
             let expr = code.slice(lastDelimIndex, i).trim()
             if (expr.endsWith(delim)) expr = expr.slice(0, -delim.length).trim()
             lastDelimIndex = i + 1
-            return lambda(expr, i)
+            if (lambda(expr, i)) break
         }
-    })
+    }
 }
 
 export function parseExpr(code: string): Expression {
     const compound = new CompoundExpression
-    if ((code.startsWith('{') && code.endsWith('}')) || (code.startsWith('(') && code.endsWith(')'))) code = code.slice(1, -1)
+    if ((code.startsWith('{') && code.endsWith('}')) || (code.startsWith('(') && code.endsWith(')')))
+        code = code.slice(1, -1).trim()
 
     forEachScopedExprOnDelim(code, ';', expr => {
         compound.Expressions.push(tokenizeExpr(expr))
@@ -60,8 +62,8 @@ export function parseExpr(code: string): Expression {
     return compound.Simplify()
 }
 
-function tokenizeExpr(expr: string) {
-    const compound = new CompoundExpression
+function tokenizeExpr(expr: string): Expression {
+    // const compound = new CompoundExpression
 
     const groups = (/^([_A-Za-z]+[-\w]*(?:\.[_A-Za-z]+[-\w]*)*)(.*)$/g).exec(expr)
     
@@ -69,84 +71,75 @@ function tokenizeExpr(expr: string) {
     let rest = groups?.at(2)?.trim() || undefined
 
     if (keyword === 'asm') {
-        compound.Expressions.push(new AsmExpression(rest))
+        return new AsmExpression(rest)
     }
     else if (keyword === 'class') {
-        compound.Expressions.push(new ClassExpression(rest))
+        return new ClassExpression(rest)
     }
     else if (keyword === 'let') {
-        compound.Expressions.push(new DeclarationExpression(rest))
+        return new DeclarationExpression(rest)
     }
     else if (keyword === 'func') {
-        compound.Expressions.push(new FuncExpression(rest))
+        return new FuncExpression(rest)
     }
     else if (keyword === 'if') {
-        compound.Expressions.push(new IfExpression(rest))
+        return new IfExpression(rest)
     }
     else if (keyword === 'operator') {
-        compound.Expressions.push(new OperatorOverloadExpression(rest))
+        return new OperatorOverloadExpression(rest)
     }
     else if (keyword === 'return') {
-        compound.Expressions.push(new ReturnExpression(rest))
+        return new ReturnExpression(rest)
     }
     else if (keyword === 'struct') {
-        compound.Expressions.push(new StructExpression(rest))
+        return new StructExpression(rest)
     }
     else if (keyword === 'while') {
-        compound.Expressions.push(new WhileExpression(rest))
+        return new WhileExpression(rest)
     }
     else if (keyword.RegexTest(/^\d+$/g) && rest === undefined) {
-        compound.Expressions.push(new LiteralExpression(keyword.toInt()))
+        return new LiteralExpression(keyword.toInt())
     }
     else if (keyword.RegexTest(/^0x[\dA-Fa-f]+$/g) && rest === undefined) {
-        compound.Expressions.push(new LiteralExpression(keyword.slice(2).toInt(16)))
+        return new LiteralExpression(keyword.slice(2).toInt(16))
     }
     else if (keyword.RegexTest(/^[_A-Za-z]+[-\w]*(\.[_A-Za-z]+[-\w]*)*$/g) && rest === undefined) {
-        const exp = new VariableExpression
-        exp.Identifier = keyword
-        compound.Expressions.push(exp)
+        return new VariableExpression(keyword)
     }
     else if (isValidIdentifier(keyword) && rest?.startsWith('(')) {
-        compound.Expressions.push(new FuncCallExpression(expr))
+        return new FuncCallExpression(expr)
     }
     else {
         let parenDepth = 0
-        main_loop:
         for (const [char, i] of expr.toArray().WithIndices()) {
             if (char === '(') parenDepth++
             else if (char === ')') parenDepth--
             else if (parenDepth !== 0) continue
 
             const r = expr.slice(i)
-            const exp = new OperationExpression
 
             for (const [operator, optype] of unaryPostfixes) {
                 if (r.startsWith(operator)) {
-                    exp.Operator = optype
-                    exp.Operand = parseExpr(expr.slice(0, i))
-                    compound.Expressions.push(exp)
-                    break main_loop
+                    return new OperationExpression(optype,
+                        parseExpr(expr.slice(0, i))
+                    )
                 }
             }
             for (const [operator, optype] of binaries) {
                 if (r.startsWith(operator)) {
-                    exp.Operator = optype
-                    exp.Operand = parseExpr(expr.slice(0, i).trim())
-                    exp.Operand2 = parseExpr(expr.slice(i + operator.length).trim())
-                    compound.Expressions.push(exp)
-                    break main_loop
+                    return new OperationExpression(optype,
+                        parseExpr(expr.slice(0, i).trim()),
+                        parseExpr(expr.slice(i + operator.length).trim())
+                    )
                 }
             }
             for (const [operator, optype] of unaryPrefixes) {
                 if (r.startsWith(operator)) {
-                    exp.Operator = optype
-                    exp.Operand = parseExpr(expr.slice(i + operator.length))
-                    compound.Expressions.push(exp)
-                    break main_loop
+                    return new OperationExpression(optype,
+                        parseExpr(expr.slice(i + operator.length)))
                 }
             }
         }
+        throw new LexerError('could not understand' + expr)
     }
-
-    return compound.Simplify()
 }

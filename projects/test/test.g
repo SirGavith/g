@@ -1,5 +1,5 @@
 let byte a = 4;
-let byte b = 1;//comment here
+let byte b = 1;
 
 if (a > b) {
     a++;

@@ -56,4 +56,5 @@ export const unaryPostfixes: [string, Operators][] = [
     ['--', Operators.Decrement],
 ]
 
-export const operatorMappings = new Map(binaries.concat(unaryPrefixes, unaryPostfixes))
+export const operatorMapStringOpr = new Map(binaries.concat(unaryPrefixes, unaryPostfixes))
+export const operatorMapOprString = new Map(binaries.concat(unaryPrefixes, unaryPostfixes).map(([a,b]) => [b,a] as const))

@@ -1,5 +1,6 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
+import * as Console from 'glib/dist/Console'
 
 export interface FuncParameter {
     Type: string
@@ -8,28 +9,28 @@ export interface FuncParameter {
 
 export class FuncExpression extends Expression {
     override ExpressionType: ExpressionTypes.Func = ExpressionTypes.Func
-    Identifier?: string
-    ReturnType?: string
+    Identifier: string
+    ReturnType: string
     Parameters: FuncParameter[] = []
-    Body?: Expression
+    Body: Expression
 
     constructor(rest?: string) {
         super()
         if (rest === undefined) 
             throw new LexerError('could not find func body')
 
-        this.ReturnType = rest.slice(0, rest.indexOf(' '))
+        this.ReturnType = rest.slice(0, rest.indexOf(' ')).trim()
         if (!isValidIdentifier(this.ReturnType)) {
             throw new LexerError(`return type '${this.ReturnType}' is invalid`)
         }
         rest = rest.slice(this.ReturnType.length).trim()
-        this.Identifier = rest.slice(0, rest.indexOf('('))
+        this.Identifier = rest.slice(0, rest.indexOf('(')).trim()
         if (!isValidIdentifier(this.Identifier)) {
             throw new LexerError(`type '${this.Identifier}' is invalid`)
         }
         rest = rest.slice(this.Identifier.length + 1).trim()
         const rightParenIndex = rest.indexOf(')')
-        rest.slice(0, rightParenIndex).split(',').forEach(pair => {
+        rest.slice(0, rightParenIndex).trim().split(',').forEach(pair => {
             if (!pair) return
             const [type, identifier] = pair.trim().split(' ')
 
@@ -53,5 +54,14 @@ export class FuncExpression extends Expression {
             console.error(e)
             throw new LexerError('func body parsing failed')
         }
+    }
+
+    override Log(indent = 0) {
+        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier} ${Console.Magenta + this.ReturnType + Console.Reset} Params:`)
+        console.log(' '.repeat(indent + 1) + this.Parameters.map(p => 
+            `${Console.Red + p.Identifier} ${Console.Magenta + p.Type + Console.Reset}`
+        ).join(', '))
+        console.log(' '.repeat(indent + 1) + 'Body:')
+        this.Body.Log(indent + 1)
     }
 }

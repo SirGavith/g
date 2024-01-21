@@ -1,4 +1,29 @@
 let byte x = 1;
-(x + 2) * (3-5)
+let byte y = ((x + 2) * (5 - 3));
 
-// alloc x
+operator + byte (byte n1, byte n2) {
+    return asm {
+        LDA n1;
+        ADC n2;
+    };
+};
+
+operator - byte (byte n1, byte n2) {
+    return asm {
+        LDA n1;
+        SBC n2;
+    };
+};
+
+operator == byte (byte n1, byte n2) {
+    return asm {
+        LDA n1;
+        CPA n2;
+        BNE @not_eq;
+        LDA #0;
+        RTS;
+        @zero_clear;
+        LDA #1;
+        RTS;
+    };
+}

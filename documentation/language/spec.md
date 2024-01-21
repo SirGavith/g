@@ -30,10 +30,6 @@ asm {
 - If another file is imported, the two files will simply be combined
 - The order of functions and classes does not matter
 
-## Files
-- Files compile as functions
-- To run, the function is called
-- Therefore, everything can exist within the function
 
 ## Variables
 ```
@@ -67,7 +63,7 @@ let byte c = 20;
 - Unary posifix operators (one arg before operator)
   - `++`
   - `--`
-- Bracket operators are for later
+- No operators are implemented by default, use libraries
 
 ## Expressions
 
@@ -122,10 +118,19 @@ class XY : XY_struct {
 - Methods are very similar to functions
 - The difference is that methods get a `this` value that is the struct
 
-### Operator methods
-- Special methods that define class operators
+### Operator Overload Functions
+- Special functions that define operators
 - 
 
+## Asm
+- Include assembly in your code
+- returns whatever `byte` you leave in the A register
+```
+return asm {
+    LDA n1;
+    ADC n2;
+};
+```
 
 ## Null
 - Null is a library

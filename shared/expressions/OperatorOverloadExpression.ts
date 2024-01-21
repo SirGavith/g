@@ -1,6 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
-import { Operators, operatorMappings } from "../operators"
+import { Operators, operatorMapOprString, operatorMapStringOpr } from "../operators"
+import * as Console from 'glib/dist/Console'
 
 export interface FuncParameter {
     Type: string
@@ -13,7 +14,7 @@ export class OperatorOverloadExpression extends Expression {
     ReturnType: string
     Operator: Operators
     Parameters: FuncParameter[] = []
-    Body?: Expression
+    Body: Expression
 
     constructor(rest?: string) {
         super()
@@ -22,13 +23,13 @@ export class OperatorOverloadExpression extends Expression {
 
         const operandEndIndex = Math.min(rest.indexOf(' '), rest.indexOf('('))
 
-        const operator = operatorMappings.get(rest.slice(0, operandEndIndex))
+        const operator = operatorMapStringOpr.get(rest.slice(0, operandEndIndex).trim())
         if (operator === undefined)
             throw new LexerError(`operator overload '${rest.slice(0, operandEndIndex)}' is not valid`)
 
         this.Operator = operator
 
-        rest = rest.slice(operandEndIndex + 1)
+        rest = rest.slice(operandEndIndex + 1).trim()
 
         const lParenIndex = rest.indexOf('(')
 
@@ -42,7 +43,7 @@ export class OperatorOverloadExpression extends Expression {
 
         const rightParenIndex = rest.indexOf(')')
 
-        rest.slice(0, rightParenIndex).split(',').forEach(pair => {
+        rest.slice(0, rightParenIndex).trim().split(',').forEach(pair => {
             if (!pair) return
             const [type, identifier] = pair.trim().split(' ')
 
@@ -59,12 +60,14 @@ export class OperatorOverloadExpression extends Expression {
         })
         rest = rest.slice(rightParenIndex + 1).trim()
 
-        try {
-            this.Body = parseExpr(rest)
-        }
-        catch (e) {
-            console.error(e)
-            throw new LexerError('func body parsing failed')
-        }
+        this.Body = parseExpr(rest)
+    }
+
+    override Log(indent = 0) {
+        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType] + Console.Reset} ${operatorMapOprString.get(this.Operator!)} ${Console.Magenta + this.ReturnType + Console.Reset} :`)
+        console.log(' '.repeat(indent) + this.Parameters.map(p =>
+            `${Console.Red + p.Identifier} ${Console.Magenta + p.Type + Console.Reset}`
+        ).join(', '))
+        this.Body.Log(indent + 1)
     }
 }
