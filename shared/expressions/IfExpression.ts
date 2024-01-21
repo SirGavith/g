@@ -1,4 +1,4 @@
-import { Expression, ExpressionTypes } from "../../lexer/expressions"
+import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError, forEachScopedExprOnDelim } from "../../lexer/lexer"
 
 export class IfExpression extends Expression {

@@ -1,4 +1,4 @@
-import { CompoundExpression, Expression, ExpressionTypes } from "../../lexer/expressions"
+import { CompoundExpression, Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, forEachScopedExprOnDelim, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 
 

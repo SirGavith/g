@@ -1,4 +1,4 @@
-import { Operators } from './operators'
+import { Operators } from '../operators'
 
 export enum ExpressionTypes {
     Compound,
@@ -15,8 +15,6 @@ export enum ExpressionTypes {
     Class,      // class
     OperatorOverload, // operator
 }
-
-// export type Expression = CompoundExpression | DeclarationExpression | IfExpression | LiteralExpression | OperationExpression | VariableExpression | WhileExpression
 
 export abstract class Expression {
     ExpressionType: ExpressionTypes = ExpressionTypes.Unknown
@@ -35,20 +33,4 @@ export class CompoundExpression extends Expression {
     //     })
     //     console.log(' '.repeat(indent) + ']')
     // }
-}
-
-
-
-
-export class OperationExpression extends Expression {
-    override ExpressionType: ExpressionTypes.Operation = ExpressionTypes.Operation
-    Operand?: Expression
-    Operator?: Operators
-    Operand2?: Expression
-}
-
-export class VariableExpression extends Expression {
-    override ExpressionType: ExpressionTypes.Variable = ExpressionTypes.Variable
-    constructor(identifier?: string) { super(); this.Identifier = identifier }
-    Identifier?: string
 }

@@ -1,4 +1,4 @@
-import { Expression, ExpressionTypes } from "../../lexer/expressions"
+import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, parseExpr } from "../../lexer/lexer"
 
 export interface Method {

@@ -1,18 +1,20 @@
 import { CustomError } from 'glib/dist/Error'
-import { CompoundExpression, Expression, OperationExpression, VariableExpression } from './expressions'
-import { binaries, unaryPostfixes, unaryPrefixes } from './operators'
+import { CompoundExpression, Expression } from '../shared/expressions/Expressions'
+import { binaries, unaryPostfixes, unaryPrefixes } from '../shared/operators'
 
 import { AsmExpression } from '../shared/expressions/AsmExpression'
-import { DeclarationExpression } from '../shared/expressions/DeclarationExpression'
-import { IfExpression, } from '../shared/expressions/IfExpression'
-import { WhileExpression, } from '../shared/expressions/WhileExpression'
-import { StructExpression, } from '../shared/expressions/StructExpression'
-import { FuncExpression } from '../shared/expressions/FuncExpression'
-import { FuncCallExpression } from '../shared/expressions/FuncCallExpression'
-import { LiteralExpression } from '../shared/expressions/LiteralExpression'
 import { ClassExpression } from '../shared/expressions/ClassExpression'
-import { ReturnExpression } from '../shared/expressions/ReturnExpression'
+import { DeclarationExpression } from '../shared/expressions/DeclarationExpression'
+import { FuncCallExpression } from '../shared/expressions/FuncCallExpression'
+import { FuncExpression } from '../shared/expressions/FuncExpression'
+import { IfExpression, } from '../shared/expressions/IfExpression'
+import { LiteralExpression } from '../shared/expressions/LiteralExpression'
+import { OperationExpression } from '../shared/expressions/OperationExpression'
 import { OperatorOverloadExpression } from '../shared/expressions/OperatorOverloadExpression'
+import { ReturnExpression } from '../shared/expressions/ReturnExpression'
+import { StructExpression, } from '../shared/expressions/StructExpression'
+import { VariableExpression } from '../shared/expressions/VariableExpression'
+import { WhileExpression, } from '../shared/expressions/WhileExpression'
 
 
 export class LexerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
@@ -93,16 +95,6 @@ function tokenizeExpr(expr: string) {
     else if (keyword === 'while') {
         compound.Expressions.push(new WhileExpression(rest))
     }
-    // else if (keyword === 'true' && rest === '') {
-    //     const exp = new LiteralExpression
-    //     exp.Value = 1
-    //     compound.Expressions.push(exp)
-    // }
-    // else if (keyword === 'false' && rest === '') {
-    //     const exp = new LiteralExpression
-    //     exp.Value = 0
-    //     compound.Expressions.push(exp)
-    // }
     else if (keyword.RegexTest(/^\d+$/g) && rest === undefined) {
         compound.Expressions.push(new LiteralExpression(keyword.toInt()))
     }

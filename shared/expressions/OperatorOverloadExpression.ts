@@ -1,6 +1,6 @@
-import { Expression, ExpressionTypes } from "../../lexer/expressions"
+import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
-import { Operators, operatorMappings } from "../../lexer/operators"
+import { Operators, operatorMappings } from "../operators"
 
 export interface FuncParameter {
     Type: string
@@ -20,11 +20,15 @@ export class OperatorOverloadExpression extends Expression {
         if (rest === undefined) 
             throw new LexerError('could not find func body')
 
-        const spacePos = rest.indexOf(' ')
+        const operandEndIndex = Math.min(rest.indexOf(' '), rest.indexOf('('))
 
-        this.Operator = operatorMappings[rest.slice(0, spacePos)]
+        const operator = operatorMappings.get(rest.slice(0, operandEndIndex))
+        if (operator === undefined)
+            throw new LexerError(`operator overload '${rest.slice(0, operandEndIndex)}' is not valid`)
 
-        rest = rest.slice(spacePos + 1)
+        this.Operator = operator
+
+        rest = rest.slice(operandEndIndex + 1)
 
         const lParenIndex = rest.indexOf('(')
 

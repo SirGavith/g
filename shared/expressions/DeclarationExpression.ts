@@ -1,5 +1,5 @@
 import { LexerError, isValidIdentifier, parseExpr } from '../../lexer/lexer'
-import { Expression, ExpressionTypes } from '../../lexer/expressions'
+import { Expression, ExpressionTypes } from './Expressions'
 
 
 export class DeclarationExpression extends Expression {
