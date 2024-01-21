@@ -1,9 +1,9 @@
 struct byte_xy {
-    byte x,
-    byte y,
-}
+    byte x = 0;
+    byte y;
+};
 
-let pos: byte_xy;
+let byte_xy pos;
 
 pos.x = 0;
-pox.y = 4;
+pos.y = 4;

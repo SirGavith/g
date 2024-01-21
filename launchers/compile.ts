@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { CompilerError } from '../compiler/compiler'
+import { CompilerError } from '../compiler/compiler_old'
 import { Lexer } from '../lexer/lexer'
 import * as Console from 'glib/dist/Console'
 import { Extensions } from 'glib'

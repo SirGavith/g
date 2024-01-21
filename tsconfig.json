@@ -71,7 +71,7 @@
   },
   "include": [
     "assembler/assembler.ts",
-    "compiler/compiler.ts",
+    "compiler/compiler_old.ts",
     "emulator/emulator.ts",
     "assembler/assembler.ts",
     "lexer/lexer.ts",

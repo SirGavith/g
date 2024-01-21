@@ -10,7 +10,7 @@
 
 ## Assembly
 ``` 
-assembly {
+asm {
     defineAddress DATA_DIRECTION_B: $6002
     defineAddress OUTPUT_B: $6000
 
@@ -67,6 +67,7 @@ let byte c = 20;
 - Unary posifix operators (one arg before operator)
   - `++`
   - `--`
+- Bracket operators are for later
 
 ## Expressions
 
@@ -77,9 +78,9 @@ let byte c = 20;
 ```
 func bool isZero(byte a) {
     if (a == 0) {
-        return true
-    }
-    return false
+        return true;
+    };
+    return false;
 }
 ```
 

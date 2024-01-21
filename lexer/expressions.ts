@@ -2,22 +2,25 @@ import { Operators } from './operators'
 
 export enum ExpressionTypes {
     Compound,
-    Declaration, // let
-    If,          // if
-    Literal,     // \d
-    Operation,   //
+    Declaration,// let
+    If,         // if
+    Literal,    // \d
+    Operation,  //
     Unknown,
-    Variable,    // identifier
-    While,
+    Variable,   // \w
+    While,      // while
+    Asm,        // asm
+    Func,       // func
+    Return,     // return
 }
 
-export type Expression = CompoundExpression | DeclarationExpression | IfExpression | LiteralExpression | OperationExpression | VariableExpression | WhileExpression
+// export type Expression = CompoundExpression | DeclarationExpression | IfExpression | LiteralExpression | OperationExpression | VariableExpression | WhileExpression
 
-abstract class ExpressionBase {
+export abstract class Expression {
     ExpressionType: ExpressionTypes = ExpressionTypes.Unknown
 }
 
-export class CompoundExpression extends ExpressionBase {
+export class CompoundExpression extends Expression {
     override ExpressionType: ExpressionTypes.Compound = ExpressionTypes.Compound
     Expressions: Expression[] = []
     Simplify() {
@@ -32,40 +35,18 @@ export class CompoundExpression extends ExpressionBase {
     // }
 }
 
-export class DeclarationExpression extends ExpressionBase {
-    override ExpressionType: ExpressionTypes.Declaration = ExpressionTypes.Declaration
-    Identifier?: string 
-    Type?: string
-    Initializer?: Expression
-}
 
-export class IfExpression extends ExpressionBase {
-    override ExpressionType: ExpressionTypes.If = ExpressionTypes.If
-    Condition?: Expression
-    Body?: Expression
-    ElseExpression?: Expression
-}
 
-export class LiteralExpression extends ExpressionBase {
-    override ExpressionType: ExpressionTypes.Literal = ExpressionTypes.Literal
-    Value?: number
-}
 
-export class OperationExpression extends ExpressionBase {
+export class OperationExpression extends Expression {
     override ExpressionType: ExpressionTypes.Operation = ExpressionTypes.Operation
     Operand?: Expression
     Operator?: Operators
     Operand2?: Expression
 }
 
-export class VariableExpression extends ExpressionBase {
+export class VariableExpression extends Expression {
     override ExpressionType: ExpressionTypes.Variable = ExpressionTypes.Variable
     constructor(identifier?: string) { super(); this.Identifier = identifier }
     Identifier?: string
-}
-
-export class WhileExpression extends ExpressionBase {
-    override ExpressionType: ExpressionTypes.While = ExpressionTypes.While
-    Condition?: Expression
-    Body?: Expression
 }
