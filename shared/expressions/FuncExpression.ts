@@ -64,4 +64,11 @@ export class FuncExpression extends Expression {
         // this is where lambdas could one day go
         return 'void'
     }
+
+    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+        return [
+            //SOMETHING WITH PARAMS??
+            `@${this.Identifier}`,
+        ].concat(this.Body.getAssembly(newVariableNameMap))
+    }
 }

@@ -27,6 +27,7 @@ export abstract class Expression {
     Log(indent: number = 0): void {}
 
     getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string { throw new CompilerError }
+    getAssembly(newVariableNameMap: Map<string, string>): string[] { throw new CompilerError}  
 }
 
 export class CompoundExpression extends Expression {
@@ -48,5 +49,9 @@ export class CompoundExpression extends Expression {
 
     override getType(identifiers: Map<string, string>) {
         return 'void'
+    }
+
+    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+        return this.Children.flatMap(child => child.getAssembly(newVariableNameMap))
     }
 }

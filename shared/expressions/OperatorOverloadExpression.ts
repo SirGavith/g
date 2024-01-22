@@ -1,12 +1,13 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
-import { Operators, operatorMapOprString, operatorMapStringOpr } from "../operators"
+import { Operators, binarySetOperators, operatorMapOprString, operatorMapStringOpr } from "../operators"
 import * as Console from 'glib/dist/Console'
 import { CompilerError } from "../../compiler/compiler"
 
 export interface FuncParameter {
     Type: string
     Identifier: string
+    AssemblyName?: string
 }
 
 export class OperatorOverloadExpression extends Expression {
@@ -15,6 +16,7 @@ export class OperatorOverloadExpression extends Expression {
     ReturnType: string
     Operator: Operators
     Parameters: FuncParameter[] = []
+    AssemblyName: string
     Body: Expression
 
     constructor(rest?: string) {
@@ -56,9 +58,21 @@ export class OperatorOverloadExpression extends Expression {
             }
             this.Parameters.push({
                 Type: type,
-                Identifier: identifier
+                Identifier: identifier,
+                AssemblyName: undefined
             })
         })
+        if (binarySetOperators.has(this.Operator)) {
+            if (this.Parameters.length !== 2)
+                throw new CompilerError('binary Set overloads must have 2 parameters')
+        }
+        //TODO: add more of those ^ checks for all the other kinds of operator
+
+        if (this.Parameters.length === 0 || this.Parameters.length > 2)
+            throw new CompilerError('operator overloads must have 1 or 2 params')
+
+        this.AssemblyName = `OPR_` + this.Parameters.map(p => p.Type).join('_') + '_' + this.Operator
+        this.Parameters.forEach(p => p.AssemblyName = `${this.AssemblyName }_${p.Identifier}`)
         rest = rest.slice(rightParenIndex + 1).trim()
 
         this.Body = parseExpr(rest)
@@ -66,7 +80,7 @@ export class OperatorOverloadExpression extends Expression {
     }
 
     override Log(indent = 0) {
-        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType] + Console.Reset} ${operatorMapOprString.get(this.Operator!)} ${Console.Magenta + this.ReturnType + Console.Reset} :`)
+        console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType] + Console.Reset} ${operatorMapOprString.get(this.Operator)} ${Console.Magenta + this.ReturnType + Console.Reset} :`)
         console.log(' '.repeat(indent) + this.Parameters.map(p =>
             `${Console.Red + p.Identifier} ${Console.Magenta + p.Type + Console.Reset}`
         ).join(', '))
@@ -79,5 +93,19 @@ export class OperatorOverloadExpression extends Expression {
 
     override getType(identifiers: Map<string, string>): string {
         throw new CompilerError('tried to get type of operator overload')
+    }
+
+    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+        const varMap = newVariableNameMap.Copy()
+        this.Parameters.forEach(p => {
+            varMap.set(p.Identifier, p.AssemblyName!)
+        })
+
+        return [
+            `alloc ${this.Parameters[0].AssemblyName}`,
+            `alloc ${this.Parameters[1].AssemblyName}`,
+            `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ') }`,
+            `@${this.AssemblyName}`,
+        ].concat(this.Body.getAssembly(varMap), '')
     }
 }

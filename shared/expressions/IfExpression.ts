@@ -1,6 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError, forEachScopedExprOnDelim } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
+import { randomIdentifier } from "../../compiler/compiler"
 
 export class IfExpression extends Expression {
     override ExpressionType: ExpressionTypes.If = ExpressionTypes.If
@@ -53,5 +54,33 @@ export class IfExpression extends Expression {
 
     override getType(identifiers: Map<string, string>) {
         return 'void'
+    }
+
+    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+        const end_name = `endif` + randomIdentifier()
+
+        if (!this.ElseExpression) {
+            return [
+                ...this.Condition.getAssembly(newVariableNameMap),
+                `BEQ ${end_name}`,
+                //true case
+                ...this.Body.getAssembly(newVariableNameMap),
+                `@${end_name}`,
+            ]
+        }
+        else {
+            const else_name = `else` + randomIdentifier()
+            return [
+                ...this.Condition.getAssembly(newVariableNameMap),
+                `BEQ ${else_name}`,
+                //true case
+                ...this.Body.getAssembly(newVariableNameMap),
+                `JMP ${end_name}`,
+                `@${else_name}`,
+                //false case
+                ...this.ElseExpression.getAssembly(newVariableNameMap),
+                `@${end_name}`,
+            ]
+        }
     }
 }

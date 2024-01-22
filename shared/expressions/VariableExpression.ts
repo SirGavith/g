@@ -24,4 +24,10 @@ export class VariableExpression extends Expression {
             throw new CompilerError(`variable '${this.Identifier}' is not declared before usage`)
         return type
     }
+
+    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+        return [
+            `LDA ${newVariableNameMap.get(this.Identifier) ?? this.Identifier}`
+        ]
+    }
 }

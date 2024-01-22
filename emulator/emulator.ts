@@ -69,9 +69,10 @@ export class Emu6502 {
                 ' Disassembled |' +
                 ' A  X  Y  SP |' +
                 ' NV-BDIZC |' +
-                ' Output B         | ' +
+                // ' Output B         | ' +
                 // ' Zpage |' +
-                ' $6000 -'
+                // ' $6000 -' +
+                ' $200 -'
             )
         }
 
@@ -188,11 +189,11 @@ export class Emu6502 {
                 this.ToString(this.SP, 2, 16) + ' | ' +
                 this.ToString(this.SR, 8,  2) + ' | ' +
                 //watches
-                [...this.Storage[0x6000].toString(2).padStart(8, '0')].map((c, i) => (this.Storage[0x6002] >> 8 - i - 1 > 0) ? (c === '1' ? '🔴' : '⚪') : '⚫').join('') + ' | ' +
+                // [...this.Storage[0x6000].toString(2).padStart(8, '0')].map((c, i) => (this.Storage[0x6002] >> 8 - i - 1 > 0) ? (c === '1' ? '🔴' : '⚪') : '⚫').join('') + ' | ' +
                 // zWatchArr.join(',') + ' | ' +
                 // sWatchArr.join(',') + ' | ' +
-                // watchArr.join(',')
-                oWatchArr.join(',')
+                watchArr.join(',')
+                // oWatchArr.join(',')
             )
         }
     }

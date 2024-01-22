@@ -11,31 +11,30 @@ Extensions.init()
 // Lex Current File
 const inFilePath = process.argv.slice(2)[0]
 if (!inFilePath.endsWith('.g')) {
-    console.log('Can only assemble .g files')
+    console.log('Can only compile .g files')
     exit(1)
 }
 
 console.log(Console.Cyan + 'Lexing', Console.Reset, inFilePath.split('/').slice(-1)[0])
 
-let file = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
+// Read Code
+let code = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 
-const AST = Lexer(file)
+// Lex Code
+const AST = Lexer(code)
 
 // AST.Log()
 
-console.log(Console.Cyan + `Lexed` + Console.Reset)
+console.log(Console.Cyan + `Lexed ${code.split('\n').length} lines` + Console.Reset)
 console.log(Console.Cyan + 'Compiling', Console.Reset)
 
-Compile(AST)
 
-// // Read File
-// let assembly = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
+// Compile AST
+const assembly = Compile(AST).join('\n')
 
-// // Assemble File
-// const [ROM, codeLength] = Assemble(assembly, inFileDir)
 
-// // Write binary
-// const outFilePath = inFilePath.slice(0, -2) + 'gbin'
-// fs.writeFileSync(outFilePath, ROM)
+// Write binary
+const outFilePath = inFilePath.slice(0, -1) + 'ga'
+fs.writeFileSync(outFilePath, assembly)
 
-// console.log(Console.Cyan + `Assembled ${codeLength} bytes. Written to:`, Console.Reset, outFilePath.split('/').slice(-1)[0])
+console.log(Console.Cyan + `Compiled. Written to:`, Console.Reset, outFilePath.split('/').slice(-1)[0])

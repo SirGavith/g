@@ -27,4 +27,10 @@ export class ReturnExpression extends Expression {
         if (this.Expression === undefined) return 'void'
         return this.Expression?.getType(identifiers, validOperators)
     }
+
+    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+        return (this.Expression?.getAssembly(newVariableNameMap) ?? []).concat([
+            `RTS`
+        ])
+    }
 }

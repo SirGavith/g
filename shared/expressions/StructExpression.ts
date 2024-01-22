@@ -40,6 +40,10 @@ export class StructExpression extends Expression {
     }
 
     override getType(identifiers: Map<string, string>): string {
-        throw new CompilerError('tried to get type of operator overload')
+        throw new CompilerError('tried to get type of struct')
+    }
+
+    override getAssembly(): string[] {
+        throw new CompilerError('tried to get assembly of struct')
     }
 }

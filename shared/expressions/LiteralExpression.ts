@@ -18,4 +18,10 @@ export class LiteralExpression extends Expression {
     override getType(identifiers: Map<string, string>) {
         return 'byte'
     }
+
+    override getAssembly(): string[] {
+        return [
+            `LDA #$${this.Value.toString(16)}`
+        ]
+    }
 }

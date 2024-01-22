@@ -16,8 +16,11 @@ let assembly = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 // Assemble File
 const [ROM, codeLength] = Assemble(assembly, inFileDir)
 
+const emptyBuffer = Buffer.alloc(0x8000, 0)
+
 // Write binary
 const outFilePath = inFilePath.slice(0, -2) + 'gbin'
+// fs.writeFileSync(outFilePath, Buffer.concat([emptyBuffer, ROM]))
 fs.writeFileSync(outFilePath, ROM)
 
 console.log(Console.Cyan + `Assembled ${codeLength} bytes. Written to:`, Console.Reset, outFilePath.split('/').slice(-1)[0])

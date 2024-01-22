@@ -42,6 +42,8 @@ export const binaries: [string, Operators][] = [
     ['<=', Operators.LessThanEQ],
     ['<', Operators.LessThan],
 ]
+export const binaryOperators = new Set(binaries.map(([_, opr]) => opr))
+
 export const binarySets: [string, Operators][] = [
     ['+=', Operators.PlusEQ],
     ['-=', Operators.MinusEQ],
@@ -52,6 +54,7 @@ export const binarySets: [string, Operators][] = [
 export const setEq: [string, Operators][] = [
     ['=', Operators.SetEQ]
 ]
+export const binarySetOperators = new Set(binarySets.concat(setEq).map(([_, opr]) => opr))
 
 export const unaryPrefixes: [string, Operators][] = [
     ['!', Operators.Not],

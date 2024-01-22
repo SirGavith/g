@@ -45,4 +45,11 @@ export class FuncCallExpression extends Expression {
             throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
         return returnType
     }
+
+    override getAssembly(): string[] {
+        return [
+            //DO SOMETHING WITH PARAMS
+            `JSR ${this.Identifier}`
+        ]
+    }
 }

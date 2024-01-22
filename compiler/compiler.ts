@@ -6,6 +6,7 @@ import * as Console from 'glib/dist/Console'
 import { VariableExpression } from "../shared/expressions/VariableExpression";
 import { CustomError } from "glib/dist/Error";
 import { OperatorOverloadExpression } from "../shared/expressions/OperatorOverloadExpression";
+import { randomBytes } from "crypto";
 
 export class CompilerError extends CustomError {
     constructor(...message: any[]) {
@@ -14,10 +15,13 @@ export class CompilerError extends CustomError {
     }
 }
 
+export function randomIdentifier(): string {
+    return `R` + randomBytes(4).toString('hex')
+}
 
 //to 6502 gassembly
 export function Compile(expression: Expression) {
-    expression.Log()
+    // expression.Log()
 
     //find all valid types
     const validOperators = new Map<string, OperatorOverloadExpression>()
@@ -25,7 +29,7 @@ export function Compile(expression: Expression) {
     const validTypes = new Set<string>(['byte'])
 
 
-    expression.Children.filter(childExpr => {
+    expression.Children = expression.Children.filter(childExpr => {
         if (childExpr.ExpressionType === ExpressionTypes.Struct) {
             const struct = childExpr as StructExpression
             validTypes.add(struct.Identifier)
@@ -40,12 +44,18 @@ export function Compile(expression: Expression) {
         return true
     })
     
-    console.log('valid types:', validTypes)
-    console.log('valid Operators', validOperators)
+    // console.log('valid types:', validTypes)
+    // console.log('valid Operators', validOperators)
 
     
     //map <identifier, type>
     traverse(expression, new Map([]), validTypes, validOperators)
+
+    return [
+        ...expression.getAssembly(new Map),
+        `BRK\n\n`,
+        ...validOperators.toArray().flatMap(([_, op]) => op.getAssembly(new Map))
+    ]
 }
 
 // identifiers <name, type>
@@ -59,10 +69,11 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
     //     })
     // }
 
-    exp.Log()
+    // exp.Log()
+    // console.log(identifiers)
 
     exp.Children.forEach(child => {
-        console.log(`${Console.Cyan + ExpressionTypes[child.ExpressionType] + Console.Reset}`, identifiers)
+        // console.log(`${Console.Cyan + ExpressionTypes[child.ExpressionType] + Console.Reset}`, identifiers)
         //upstream
 
         const childIdentifiers = identifiers.Copy()
@@ -89,8 +100,5 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
     })
     //downstream
 
-
-
-    return exp.getType(identifiers, validOperators).Log()
-
+    return exp.getType(identifiers, validOperators)
 }

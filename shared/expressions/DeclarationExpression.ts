@@ -50,4 +50,10 @@ export class DeclarationExpression extends Expression {
     override getType(identifiers: Map<string, string>) {
         return 'void'
     }
+
+    override getAssembly(): string[] {
+        return [
+            `alloc ${this.Identifier}`
+        ]
+    }
 }
