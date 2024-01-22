@@ -70,7 +70,7 @@
 
     Generally, comparison instructions subtract the operand from the given register without affecting this register. Flags are still set as with a normal subtraction and thus the relation of the two values becomes accessible by the Zero, Carry and Negative flags.
     (See the branch instructions below for how to evaluate flags.)
-    Relation R − Op	Z	C	N
+    Relation    R − Op	Z	C	N
     Register < Operand	0	0	sign bit of result
     Register = Operand	1	1	0
     Register > Operand	0	1	sign bit of result

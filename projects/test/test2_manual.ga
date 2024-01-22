@@ -1,0 +1,24 @@
+// byte constructor (somewhere?)
+alloc x
+// operation byte = byte
+LDA #1
+STA x
+
+alloc temp
+LDA #3
+STA temp
+LDA x
+ADC temp
+STA x
+
+// byte constructor (somewhere?)
+alloc y
+// operation byte = byte
+
+BRK
+
+// @byte_SETEQ_byte
+
+// LDA n2
+// STA n1
+// RTS
