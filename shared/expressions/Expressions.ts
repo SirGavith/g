@@ -19,6 +19,7 @@ export enum ExpressionTypes {
     Struct,     // struct
     Class,      // class
     OperatorOverload, // operator
+    Include,     // include
 }
 
 export abstract class Expression {

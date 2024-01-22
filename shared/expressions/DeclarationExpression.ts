@@ -4,12 +4,14 @@ import * as Console from 'glib/dist/Console'
 import { OperationExpression } from './OperationExpression'
 import { Operators } from '../operators'
 import { VariableExpression } from './VariableExpression'
+import { CompilerError } from '../../compiler/compiler'
 
 
 export class DeclarationExpression extends Expression {
     override ExpressionType: ExpressionTypes.Declaration = ExpressionTypes.Declaration
     Identifier: string
     Type: string
+    Size?: number
     Initializer?: Expression
 
     constructor(rest?: string) {
@@ -47,13 +49,25 @@ export class DeclarationExpression extends Expression {
         console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier} ${Console.Magenta + this.Type + Console.Reset}${this.Initializer ? ':' : ''}`)
     }
 
-    override getType(identifiers: Map<string, string>) {
+    override getType(identifiers: Map<string, string>, ) {
         return 'void'
     }
 
+    getVarType(validTypes: Map<string, number>) {
+        if (!validTypes.has(this.Type)) 
+            throw new CompilerError(`declaration type ${this.Type} is unknown`)
+        this.Size = validTypes.get(this.Type)!
+        return this.Type
+    }
+
     override getAssembly(): string[] {
+        if (this.Size === 1) {
+            return [
+                `alloc ${this.Identifier}`
+            ]
+        }
         return [
-            `alloc ${this.Identifier}`
+            `alloc ${this.Identifier}[${this.Size}]`
         ]
     }
 }

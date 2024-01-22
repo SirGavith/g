@@ -8,7 +8,7 @@ Extensions.init()
 
 
 // Lex Current File
-const inFilePath = process.argv.slice(2)[0]
+const [inFilePath, inFileDir] = process.argv.slice(2)
 if (!inFilePath.endsWith('.g')) {
     console.log('Can only assemble .g files')
     exit(1)
@@ -18,7 +18,8 @@ console.log(Console.Cyan + 'Lexing', Console.Reset, inFilePath.split('/').slice(
 
 let file = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 {
-    const expression = Lexer(file)
+    const expression = Lexer(file, inFileDir, true)
+    console.dir(expression)
     expression.Log()
 }
 

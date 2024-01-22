@@ -20,27 +20,31 @@ export function randomIdentifier(): string {
 }
 
 //to 6502 gassembly
-export function Compile(expression: Expression) {
-    // expression.Log()
+export function Compile(expression: Expression, inFileDir: string, debug: boolean = false) {
+    if (debug) expression.Log()
 
     //find all valid types
     const validOperators = new Map<string, OperatorOverloadExpression>()
     const validStructs = new Map<string, StructExpression>()
-    const validTypes = new Set<string>(['byte'])
+    const validTypes = new Map<string, number>([
+        ['byte', 1],
+        ['address', 2],
+    ])
 
 
     expression.Children = expression.Children.filter(childExpr => {
         if (childExpr.ExpressionType === ExpressionTypes.Struct) {
             const struct = childExpr as StructExpression
-            validTypes.add(struct.Identifier)
+            validTypes.set(struct.Identifier, struct.getSize())
             validStructs.set(struct.Identifier, struct)
             return false
         }
-        if (childExpr.ExpressionType === ExpressionTypes.OperatorOverload) {
+        else if (childExpr.ExpressionType === ExpressionTypes.OperatorOverload) {
             const operatorOverload = childExpr as OperatorOverloadExpression
             validOperators.set(operatorOverload.getHashString(), operatorOverload)
             return false
         }
+
         return true
     })
     
@@ -60,7 +64,7 @@ export function Compile(expression: Expression) {
 
 // identifiers <name, type>
 // vars, functions, 
-function traverse (exp: Expression, identifiers: Map<string, string>, validTypes: Set<string>, validOperators: Map<string, OperatorOverloadExpression>) {
+function traverse (exp: Expression, identifiers: Map<string, string>, validTypes: Map<string, number>, validOperators: Map<string, OperatorOverloadExpression>) {
     // hoist structs  
     // if (exp.ExpressionType === ExpressionTypes.Compound) {
     //     exp.Children.sort((a, b) => {
@@ -80,7 +84,8 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
 
         if (child.ExpressionType === ExpressionTypes.Declaration) {
             const decl = (child as DeclarationExpression)
-            identifiers.set(decl.Identifier, decl.Type)
+            
+            identifiers.set(decl.Identifier, decl.getVarType(validTypes))
         }
         else if (child.ExpressionType === ExpressionTypes.Func) {
             const func = (child as FuncExpression)

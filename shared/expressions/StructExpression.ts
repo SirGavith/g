@@ -43,6 +43,10 @@ export class StructExpression extends Expression {
         throw new CompilerError('tried to get type of struct')
     }
 
+    getSize() {
+        return this.Members.length // FOR ARRAYS THIS NEEDS TO CHANGE
+    }
+
     override getAssembly(): string[] {
         throw new CompilerError('tried to get assembly of struct')
     }

@@ -13,4 +13,5 @@ const cpu = new Emu6502()
 cpu.Storage = new Uint8Array(0x10000)
 storage.copy(cpu.Storage)
 
-cpu.Execute()
+const exitCode = cpu.Execute()
+console.log(`Exited with code ${exitCode}`)

@@ -36,7 +36,8 @@ console.log(`Loaded in ${loadTime[0]}s ${loadTime[1] / 10 ** 6}ms`)
 const runStartTime = process.hrtime();
 
 // Execute program
-cpu.Execute()
+const exitCode = cpu.Execute()
 
 const runTime = process.hrtime(runStartTime)
+console.log(`Exited with code ${exitCode}`)
 console.log(`Ran in ${runTime[0]}s ${runTime[1] / 10 ** 6}ms`)

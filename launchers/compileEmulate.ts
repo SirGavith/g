@@ -25,7 +25,7 @@ console.log(Console.Cyan + 'Lexing', Console.Reset, inFilePath.split('/').slice(
 let code = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 
 // Lex Code
-const AST = Lexer(code)
+const AST = Lexer(code, inFileDir, true)
 
 const lexTime = process.hrtime(loadStartTime)
 console.log(Console.Cyan + `Lexed ${code.split('\n').length} lines in ${lexTime[0]}s ${lexTime[1] / 10 ** 6}ms` + Console.Reset)
@@ -34,7 +34,7 @@ const compStartTime = process.hrtime();
 
 
 // Compile AST
-const assembly = Compile(AST).join('\n')
+const assembly = Compile(AST, inFileDir, true).join('\n')
 
 // Write assembly
 const assemblyoutFilePath = inFilePath.slice(0, -1) + 'ga'
@@ -66,7 +66,8 @@ ROM.copy(cpu.Storage, 0x8000)
 const runStartTime = process.hrtime();
 
 // Execute program
-cpu.Execute()
+const exitCode = cpu.Execute()
 
 const runTime = process.hrtime(runStartTime)
+console.log(`Exited with code ${exitCode}`)
 console.log(`Ran in ${runTime[0]}s ${runTime[1] / 10 ** 6}ms`)

@@ -1,7 +1,14 @@
+include byte.g;
+
 asm {
     defineAddress DATA_DIRECTION_B: $6002;
     defineAddress OUTPUT_B: $6000;
 };
+
+// this = {
+//     byte val;
+//     address address;
+// } ???
 
 func void write(byte val, address address) {
     asm {
@@ -17,8 +24,3 @@ while (true) {
     write(val, OUTPUT_B);
     val = (val >> 1);
 };
-
-//expressiontype: CYAN
-//identifiers: RED
-//type: MAGENTA
-//literal: YELLOW

@@ -1,8 +1,3 @@
-let byte x = 1;
-x += 3;
-let byte y = ((x + 2) - (1 + 2));
-y == 3;
-
 operator = void (byte n1, byte n2) {
     return asm {
         LDA n2; // not technically needed

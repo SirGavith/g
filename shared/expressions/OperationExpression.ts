@@ -24,10 +24,6 @@ export class OperationExpression extends Expression {
             this.Operand2 = operand2
             this.Children.Push(this.Operand2)
         }
-
-        if (binarySetOperators.has(this.Operator) &&
-            this.Operand.ExpressionType !== ExpressionTypes.Variable)
-                throw new CompilerError('set operators must have a variable on the left')
     }
 
     override Log(indent = 0) {
@@ -40,7 +36,10 @@ export class OperationExpression extends Expression {
         const operandType = this.Operand.getType(identifiers, validOperators)
         const operand2Type = this.Operand2?.getType(identifiers, validOperators)
 
-        
+        if (binarySetOperators.has(this.Operator) &&
+            this.Operand.ExpressionType !== ExpressionTypes.Variable)
+                throw new CompilerError('set operators must have a variable on the left')
+
         const hashString = `${this.Operator};${operandType},${operand2Type}`
 
         this.OperatorOverload = validOperators.get(hashString)

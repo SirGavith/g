@@ -107,6 +107,7 @@ export class Emu6502 {
                 watchArr.join(',')
             )
         }
+        return this.A
     }
 
     ExecuteInstruction() {

@@ -23,6 +23,7 @@ export enum Operators {
     LessThanEQ,
     BitshiftR,
     BitshiftL,
+    Accessor
 }
 
 export const binaries: [string, Operators][] = [
@@ -41,6 +42,7 @@ export const binaries: [string, Operators][] = [
     ['>', Operators.GreaterThan],
     ['<=', Operators.LessThanEQ],
     ['<', Operators.LessThan],
+    ['.', Operators.Accessor],
 ]
 export const binaryOperators = new Set(binaries.map(([_, opr]) => opr))
 

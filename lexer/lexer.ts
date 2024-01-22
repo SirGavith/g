@@ -8,6 +8,7 @@ import { DeclarationExpression } from '../shared/expressions/DeclarationExpressi
 import { FuncCallExpression } from '../shared/expressions/FuncCallExpression'
 import { FuncExpression } from '../shared/expressions/FuncExpression'
 import { IfExpression, } from '../shared/expressions/IfExpression'
+import { IncludeExpression, } from '../shared/expressions/IncludeExpression'
 import { LiteralExpression } from '../shared/expressions/LiteralExpression'
 import { OperationExpression } from '../shared/expressions/OperationExpression'
 import { OperatorOverloadExpression } from '../shared/expressions/OperatorOverloadExpression'
@@ -19,11 +20,14 @@ import { WhileExpression, } from '../shared/expressions/WhileExpression'
 
 export class LexerError extends CustomError { constructor(...message: any[]) { super(message); this.name = this.constructor.name} }
 
-export function Lexer(c: string): Expression {
+let FileDir: string;
+export function Lexer(c: string, fileDir: string, debug: boolean = false): Expression {
+    FileDir = fileDir
     const code = c.SplitLines()
         .map(l => l.includes('//') ? l.slice(0, l.indexOf('//')) : l)
         .join('')
-        .replaceAll(/\s+/g, ' ').Log()
+        .replaceAll(/\s+/g, ' ')
+    if (debug) code.Log()
 
     return parseExpr(code)
 }
@@ -31,6 +35,25 @@ export function Lexer(c: string): Expression {
 export function isValidIdentifier(identifier: string): boolean {
     return identifier.RegexTest(/^[_A-Za-z]+[-\w]*$/g)
 }
+
+// export function forEachScopedExpr(code: string, lambda: (s: string, i: number) => boolean | void ) {
+//     let parenDepth = 0
+//     for (const [char, i] of code.toArray().WithIndices()) {
+//         if (char === '(') parenDepth++
+//         else if (char === ')') parenDepth--
+//         else if (parenDepth !== 0) continue
+
+//         const r = code.slice(i)
+//         for (const [oprString, operator] of operatorMapStringOpr) {
+//             if (r.startsWith(oprString)) {
+//                 return [new OperationExpression(operator,
+//                     parseExpr(code.slice(0, i).trim()),
+//                     parseExpr(code.slice(i + oprString.length).trim())
+//                 )]
+//             }
+//         }
+//     }
+// }
 
 export function forEachScopedExprOnDelim(code: string, delim: string, lambda: (s: string, i: number) => boolean | void) {
     let lastDelimIndex = 0
@@ -64,7 +87,7 @@ export function parseExpr(code: string): Expression {
 
 function tokenizeExpr(expr: string): Expression[] {
 
-    const tokens = (/^([_A-Za-z]+[\w]*(?:\.[_A-Za-z]+[\w]*)*)(.*)$/g).exec(expr)
+    const tokens = (/^([_A-Za-z]+[-\w]*)(.*)$/g).exec(expr)
     
     let keyword = tokens?.at(1) ?? expr
     let rest = tokens?.at(2)?.trim() || undefined
@@ -85,6 +108,9 @@ function tokenizeExpr(expr: string): Expression[] {
     else if (keyword === 'if') {
         return [new IfExpression(rest)]
     }
+    else if (keyword === 'include') {
+        return IncludeExpression(rest, FileDir)
+    }
     else if (keyword === 'operator') {
         return [new OperatorOverloadExpression(rest)]
     }
@@ -103,7 +129,7 @@ function tokenizeExpr(expr: string): Expression[] {
     else if (keyword.RegexTest(/^0x[\dA-Fa-f]+$/g) && rest === undefined) {
         return [new LiteralExpression(keyword.slice(2).toInt(16))]
     }
-    else if (keyword.RegexTest(/^[_A-Za-z]+[-\w]*(\.[_A-Za-z]+[-\w]*)*$/g) && rest === undefined) {
+    else if (isValidIdentifier(keyword) && rest === undefined) {
         return [new VariableExpression(keyword)]
     }
     else if (isValidIdentifier(keyword) && rest?.startsWith('(')) {
@@ -111,17 +137,18 @@ function tokenizeExpr(expr: string): Expression[] {
     }
     else {
         let parenDepth = 0
-        for (const [char, i] of expr.toArray().WithIndices()) {
+        for (let i = expr.length - 1; i >= 0; i--) {
+            const char = expr.charAt(i)
             if (char === '(') parenDepth++
             else if (char === ')') parenDepth--
             else if (parenDepth !== 0) continue
-
-            const r = expr.slice(i)
+            //check before endsWith??
+            const r = expr.slice(0, i)
             for (const [oprString, operator] of operatorMapStringOpr) {
-                if (r.startsWith(oprString)) {
+                if (r.endsWith(oprString)) {
                     return [new OperationExpression(operator,
-                        parseExpr(expr.slice(0, i).trim()),
-                        parseExpr(expr.slice(i + oprString.length).trim())
+                        parseExpr(expr.slice(0, i - oprString.length).trim()),
+                        parseExpr(expr.slice(i).trim())
                     )]
                 }
             }

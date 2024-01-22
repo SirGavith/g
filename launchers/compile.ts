@@ -9,7 +9,7 @@ Extensions.init()
 
 
 // Lex Current File
-const inFilePath = process.argv.slice(2)[0]
+const [inFilePath, inFileDir] = process.argv.slice(2)
 if (!inFilePath.endsWith('.g')) {
     console.log('Can only compile .g files')
     exit(1)
@@ -21,7 +21,7 @@ console.log(Console.Cyan + 'Lexing', Console.Reset, inFilePath.split('/').slice(
 let code = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 
 // Lex Code
-const AST = Lexer(code)
+const AST = Lexer(code, inFileDir, true)
 
 // AST.Log()
 
@@ -30,7 +30,7 @@ console.log(Console.Cyan + 'Compiling', Console.Reset)
 
 
 // Compile AST
-const assembly = Compile(AST).join('\n')
+const assembly = Compile(AST, inFileDir, true).join('\n')
 
 
 // Write binary
