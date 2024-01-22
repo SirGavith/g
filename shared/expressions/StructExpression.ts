@@ -2,6 +2,7 @@ import { Expression, ExpressionTypes } from "./Expressions"
 import { DeclarationExpression } from "./DeclarationExpression"
 import { parseExpr, LexerError } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
+import { CompilerError } from "../../compiler/compiler"
 
 export class StructExpression extends Expression {
     override ExpressionType: ExpressionTypes.Struct = ExpressionTypes.Struct
@@ -21,14 +22,10 @@ export class StructExpression extends Expression {
         }
 
         rest.slice(delimPos + 1, -1).trim().split(';').forEach(declaration => {
-            try {
-                if (declaration === '') return
-                this.Members.push(new DeclarationExpression(declaration.trim()))
-            }
-            catch (e) {
-                console.error(e)
-                throw new LexerError('struct members must be valid declarations')
-            }
+            if (declaration === '') return
+            const decl = new DeclarationExpression(declaration.trim())
+            this.Members.push(decl)
+            this.Children.push(decl)
         })
 
         if (this.Members.length === 0)
@@ -40,5 +37,9 @@ export class StructExpression extends Expression {
         this.Members.forEach(m => {
             m.Log(indent + 1)
         })
+    }
+
+    override getType(identifiers: Map<string, string>): string {
+        throw new CompilerError('tried to get type of operator overload')
     }
 }

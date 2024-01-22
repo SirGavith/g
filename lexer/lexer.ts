@@ -1,6 +1,6 @@
 import { CustomError } from 'glib/dist/Error'
 import { CompoundExpression, Expression } from '../shared/expressions/Expressions'
-import { binaries, unaryPostfixes, unaryPrefixes } from '../shared/operators'
+import { binaries, operatorMapStringOpr, unaryPostfixes, unaryPrefixes } from '../shared/operators'
 
 import { AsmExpression } from '../shared/expressions/AsmExpression'
 import { ClassExpression } from '../shared/expressions/ClassExpression'
@@ -56,58 +56,58 @@ export function parseExpr(code: string): Expression {
         code = code.slice(1, -1).trim()
 
     forEachScopedExprOnDelim(code, ';', expr => {
-        compound.Expressions.push(tokenizeExpr(expr))
+        compound.AddExpressions(tokenizeExpr(expr))
     })
 
     return compound.Simplify()
 }
 
-function tokenizeExpr(expr: string): Expression {
-    // const compound = new CompoundExpression
+function tokenizeExpr(expr: string): Expression[] {
 
-    const groups = (/^([_A-Za-z]+[-\w]*(?:\.[_A-Za-z]+[-\w]*)*)(.*)$/g).exec(expr)
+    const tokens = (/^([_A-Za-z]+[\w]*(?:\.[_A-Za-z]+[\w]*)*)(.*)$/g).exec(expr)
     
-    let keyword = groups?.at(1) ?? expr
-    let rest = groups?.at(2)?.trim() || undefined
+    let keyword = tokens?.at(1) ?? expr
+    let rest = tokens?.at(2)?.trim() || undefined
 
     if (keyword === 'asm') {
-        return new AsmExpression(rest)
+        return [new AsmExpression(rest)]
     }
     else if (keyword === 'class') {
-        return new ClassExpression(rest)
+        return [new ClassExpression(rest)]
     }
     else if (keyword === 'let') {
-        return new DeclarationExpression(rest)
+        const decl = new DeclarationExpression(rest)
+        return (decl.Initializer) ? [decl, decl.Initializer] : [decl]
     }
     else if (keyword === 'func') {
-        return new FuncExpression(rest)
+        return [new FuncExpression(rest)]
     }
     else if (keyword === 'if') {
-        return new IfExpression(rest)
+        return [new IfExpression(rest)]
     }
     else if (keyword === 'operator') {
-        return new OperatorOverloadExpression(rest)
+        return [new OperatorOverloadExpression(rest)]
     }
     else if (keyword === 'return') {
-        return new ReturnExpression(rest)
+        return [new ReturnExpression(rest)]
     }
     else if (keyword === 'struct') {
-        return new StructExpression(rest)
+        return [new StructExpression(rest)]
     }
     else if (keyword === 'while') {
-        return new WhileExpression(rest)
+        return [new WhileExpression(rest)]
     }
     else if (keyword.RegexTest(/^\d+$/g) && rest === undefined) {
-        return new LiteralExpression(keyword.toInt())
+        return [new LiteralExpression(keyword.toInt())]
     }
     else if (keyword.RegexTest(/^0x[\dA-Fa-f]+$/g) && rest === undefined) {
-        return new LiteralExpression(keyword.slice(2).toInt(16))
+        return [new LiteralExpression(keyword.slice(2).toInt(16))]
     }
     else if (keyword.RegexTest(/^[_A-Za-z]+[-\w]*(\.[_A-Za-z]+[-\w]*)*$/g) && rest === undefined) {
-        return new VariableExpression(keyword)
+        return [new VariableExpression(keyword)]
     }
     else if (isValidIdentifier(keyword) && rest?.startsWith('(')) {
-        return new FuncCallExpression(expr)
+        return [new FuncCallExpression(expr)]
     }
     else {
         let parenDepth = 0
@@ -117,26 +117,12 @@ function tokenizeExpr(expr: string): Expression {
             else if (parenDepth !== 0) continue
 
             const r = expr.slice(i)
-
-            for (const [operator, optype] of unaryPostfixes) {
-                if (r.startsWith(operator)) {
-                    return new OperationExpression(optype,
-                        parseExpr(expr.slice(0, i))
-                    )
-                }
-            }
-            for (const [operator, optype] of binaries) {
-                if (r.startsWith(operator)) {
-                    return new OperationExpression(optype,
+            for (const [oprString, operator] of operatorMapStringOpr) {
+                if (r.startsWith(oprString)) {
+                    return [new OperationExpression(operator,
                         parseExpr(expr.slice(0, i).trim()),
-                        parseExpr(expr.slice(i + operator.length).trim())
-                    )
-                }
-            }
-            for (const [operator, optype] of unaryPrefixes) {
-                if (r.startsWith(operator)) {
-                    return new OperationExpression(optype,
-                        parseExpr(expr.slice(i + operator.length)))
+                        parseExpr(expr.slice(i + oprString.length).trim())
+                    )]
                 }
             }
         }

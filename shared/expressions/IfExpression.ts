@@ -17,13 +17,17 @@ export class IfExpression extends Expression {
 
         forEachScopedExprOnDelim(rest, ')', (expr, i) => {
             this.Condition = parseExpr(expr.slice(1).trim())
+            this.Children.Push(this.Condition)
             const elsePos = rest.indexOf('else', i)
             if (elsePos !== -1) {
                 this.Body = parseExpr(rest.slice(i + 1, elsePos).trim())
+                this.Children.Push(this.Body)
                 this.ElseExpression = parseExpr(rest.slice(elsePos + 4).trim())
+                this.Children.Push(this.ElseExpression)
             }
             else {
                 this.Body = parseExpr(rest.slice(i + 1).trim())
+                this.Children.Push(this.Body)
             }
             return true
         })
@@ -45,5 +49,9 @@ export class IfExpression extends Expression {
             console.log(' '.repeat(indent) + `Else:`)
             this.ElseExpression.Log()
         }
+    }
+
+    override getType(identifiers: Map<string, string>) {
+        return 'void'
     }
 }

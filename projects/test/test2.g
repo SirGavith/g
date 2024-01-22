@@ -1,5 +1,12 @@
 let byte x = 1;
-let byte y = ((x + 2) * (5 - 3));
+let byte y = ((x + 2) + (5 - 3));
+
+operator = byte (byte n1, byte n2) {
+    return asm {
+        LDA n2;
+        STA n1;
+    };
+};
 
 operator + byte (byte n1, byte n2) {
     return asm {
@@ -26,4 +33,4 @@ operator == byte (byte n1, byte n2) {
         LDA #1;
         RTS;
     };
-}
+};

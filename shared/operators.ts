@@ -13,7 +13,7 @@ export enum Operators {
     ModEQ,
     Increment,
     Decrement,
-    SetEquals,
+    SetEQ,
     IsEqual,
     IsNotEqual,
     Not,
@@ -30,17 +30,11 @@ export const binaries: [string, Operators][] = [
     ['!=', Operators.IsNotEqual],
     ['&&', Operators.And],
     ['||', Operators.Or],
-    ['+=', Operators.PlusEQ],
     ['+', Operators.Plus],
-    ['-=', Operators.MinusEQ],
     ['-', Operators.Minus],
-    ['*=', Operators.TimesEQ],
     ['*', Operators.Times],
-    ['/=', Operators.DivEQ],
     ['/', Operators.Div],
-    ['%=', Operators.ModEQ],
     ['%', Operators.Mod],
-    ['=', Operators.SetEquals],
     ['>>', Operators.BitshiftR],
     ['<<', Operators.BitshiftL],
     ['>=', Operators.GreaterThanEQ],
@@ -48,6 +42,17 @@ export const binaries: [string, Operators][] = [
     ['<=', Operators.LessThanEQ],
     ['<', Operators.LessThan],
 ]
+export const binarySets: [string, Operators][] = [
+    ['+=', Operators.PlusEQ],
+    ['-=', Operators.MinusEQ],
+    ['*=', Operators.TimesEQ],
+    ['/=', Operators.DivEQ],
+    ['%=', Operators.ModEQ],
+]
+export const setEq: [string, Operators][] = [
+    ['=', Operators.SetEQ]
+]
+
 export const unaryPrefixes: [string, Operators][] = [
     ['!', Operators.Not],
 ]
@@ -56,5 +61,5 @@ export const unaryPostfixes: [string, Operators][] = [
     ['--', Operators.Decrement],
 ]
 
-export const operatorMapStringOpr = new Map(binaries.concat(unaryPrefixes, unaryPostfixes))
-export const operatorMapOprString = new Map(binaries.concat(unaryPrefixes, unaryPostfixes).map(([a,b]) => [b,a] as const))
+export const operatorMapStringOpr = new Map(unaryPostfixes.concat(binarySets, binaries, setEq, unaryPrefixes))
+export const operatorMapOprString = new Map(unaryPostfixes.concat(binarySets, binaries, setEq, unaryPrefixes).map(([a,b]) => [b,a] as const))

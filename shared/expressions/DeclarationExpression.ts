@@ -1,6 +1,9 @@
 import { LexerError, isValidIdentifier, parseExpr } from '../../lexer/lexer'
 import { Expression, ExpressionTypes } from './Expressions'
 import * as Console from 'glib/dist/Console'
+import { OperationExpression } from './OperationExpression'
+import { Operators } from '../operators'
+import { VariableExpression } from './VariableExpression'
 
 
 export class DeclarationExpression extends Expression {
@@ -31,7 +34,9 @@ export class DeclarationExpression extends Expression {
         this.Type = type
 
         if (eqIndex !== -1) {
-            this.Initializer = parseExpr(initializer)
+            this.Initializer = new OperationExpression(Operators.SetEQ, 
+                new VariableExpression(this.Identifier),
+                parseExpr(initializer))
         }
 
         if (this.Identifier === undefined)
@@ -40,6 +45,9 @@ export class DeclarationExpression extends Expression {
 
     override Log(indent = 0) {
         console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier} ${Console.Magenta + this.Type + Console.Reset}${this.Initializer ? ':' : ''}`)
-        this.Initializer?.Log(indent + 1)
+    }
+
+    override getType(identifiers: Map<string, string>) {
+        return 'void'
     }
 }

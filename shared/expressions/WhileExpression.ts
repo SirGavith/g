@@ -16,7 +16,9 @@ export class WhileExpression extends Expression {
 
         forEachScopedExprOnDelim(rest, ')', (_, i) => {
             this.Condition = parseExpr(rest.slice(1, i).trim())
+            this.Children.push(this.Condition)
             this.Body = parseExpr(rest.slice(i + 1).trim())
+            this.Children.push(this.Body)
             return true
         })
 
@@ -33,5 +35,9 @@ export class WhileExpression extends Expression {
         this.Condition.Log(indent + 1)
         console.log(' '.repeat(indent) + `Body:`)
         this.Body.Log(indent + 1)
+    }
+
+    override getType(identifiers: Map<string, string>) {
+        return 'void'
     }
 }

@@ -47,13 +47,8 @@ export class FuncExpression extends Expression {
         })
         rest = rest.slice(rightParenIndex + 1).trim()
 
-        try {
-            this.Body = parseExpr(rest)
-        }
-        catch (e) {
-            console.error(e)
-            throw new LexerError('func body parsing failed')
-        }
+        this.Body = parseExpr(rest)
+        this.Children.Push(this.Body)
     }
 
     override Log(indent = 0) {
@@ -63,5 +58,10 @@ export class FuncExpression extends Expression {
         ).join(', '))
         console.log(' '.repeat(indent + 1) + 'Body:')
         this.Body.Log(indent + 1)
+    }
+
+    override getType(identifiers: Map<string, string>) {
+        // this is where lambdas could one day go
+        return 'void'
     }
 }

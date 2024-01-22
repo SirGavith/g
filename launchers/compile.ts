@@ -21,7 +21,7 @@ let file = fs.readFileSync(inFilePath, 'utf8').replaceAll('\r', '')
 
 const AST = Lexer(file)
 
-AST.Log()
+// AST.Log()
 
 console.log(Console.Cyan + `Lexed` + Console.Reset)
 console.log(Console.Cyan + 'Compiling', Console.Reset)

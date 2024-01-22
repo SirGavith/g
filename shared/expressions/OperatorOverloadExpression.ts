@@ -2,6 +2,7 @@ import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 import { Operators, operatorMapOprString, operatorMapStringOpr } from "../operators"
 import * as Console from 'glib/dist/Console'
+import { CompilerError } from "../../compiler/compiler"
 
 export interface FuncParameter {
     Type: string
@@ -61,6 +62,7 @@ export class OperatorOverloadExpression extends Expression {
         rest = rest.slice(rightParenIndex + 1).trim()
 
         this.Body = parseExpr(rest)
+        this.Children.push(this.Body)
     }
 
     override Log(indent = 0) {
@@ -69,5 +71,13 @@ export class OperatorOverloadExpression extends Expression {
             `${Console.Red + p.Identifier} ${Console.Magenta + p.Type + Console.Reset}`
         ).join(', '))
         this.Body.Log(indent + 1)
+    }
+
+    getHashString() {
+        return `${this.Operator};${this.Parameters.map(p => p.Type).join(',')}`
+    }
+
+    override getType(identifiers: Map<string, string>): string {
+        throw new CompilerError('tried to get type of operator overload')
     }
 }

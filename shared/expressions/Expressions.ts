@@ -1,5 +1,7 @@
+import { CompilerError } from '../../compiler/compiler'
 import { Operators } from '../operators'
 import * as Console from 'glib/dist/Console'
+import { OperatorOverloadExpression } from './OperatorOverloadExpression'
 
 export enum ExpressionTypes {
     Compound,
@@ -21,21 +23,30 @@ export enum ExpressionTypes {
 
 export abstract class Expression {
     ExpressionType: ExpressionTypes = ExpressionTypes.Unknown
+    Children: Expression[] = []
     Log(indent: number = 0): void {}
+
+    getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string { throw new CompilerError }
 }
 
 export class CompoundExpression extends Expression {
     override ExpressionType: ExpressionTypes.Compound = ExpressionTypes.Compound
-    Expressions: Expression[] = []
     Simplify() {
-        return this.Expressions.length === 1 ? this.Expressions[0] : this
+        return this.Children.length === 1 ? this.Children[0] : this
+    }
+    AddExpressions(expressions: Expression[]) {
+        expressions.forEach(exp => this.Children.push(exp))
     }
     
     override Log(indent = 0) {
         console.log(' '.repeat(indent) + '[')
-        this.Expressions.forEach(e => {
+        this.Children.forEach(e => {
             e.Log(indent + 1)
         })
         console.log(' '.repeat(indent) + ']')
+    }
+
+    override getType(identifiers: Map<string, string>) {
+        return 'void'
     }
 }

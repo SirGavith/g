@@ -30,4 +30,8 @@ export class AsmExpression extends Expression {
         })
 
     }
+
+    override getType(identifiers: Map<string, string>) {
+        return 'byte'
+    }
 }

@@ -14,4 +14,8 @@ export class LiteralExpression extends Expression {
     override Log(indent = 0) {
         console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Yellow + this.Value + Console.Reset}`)
     }
+
+    override getType(identifiers: Map<string, string>) {
+        return 'byte'
+    }
 }

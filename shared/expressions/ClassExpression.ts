@@ -18,9 +18,7 @@ export class ClassExpression extends Expression {
         super()
         if (rest === undefined)
             throw new LexerError('class body appears to be empty')
-
         throw new LexerError('classes not implemented')
-        
     }
 
     override Log(indent = 0) {

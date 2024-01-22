@@ -1,6 +1,7 @@
-import { CompoundExpression, Expression, ExpressionTypes } from "./Expressions"
+import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, forEachScopedExprOnDelim, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
+import { CompilerError } from "../../compiler/compiler"
 
 
 export class FuncCallExpression extends Expression {
@@ -25,7 +26,9 @@ export class FuncCallExpression extends Expression {
 
 
         forEachScopedExprOnDelim(expr, ',', exp => {
-            this.Parameters.push(parseExpr(exp))
+            const e = parseExpr(exp)
+            this.Parameters.push(e)
+            this.Children.Push(e)
         })
     }
 
@@ -34,5 +37,12 @@ export class FuncCallExpression extends Expression {
         this.Parameters.forEach(p => {
             p.Log(indent + 1)
         })
+    }
+
+    override getType(identifiers: Map<string, string>) {
+        const returnType = identifiers.get(this.Identifier)
+        if (returnType === undefined)
+            throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
+        return returnType
     }
 }
