@@ -1,46 +1,5 @@
-JSR init_stack
-
-//alloc 2 bytes and set to #3 and #4
-LDA #2
-JSR alloca
-
-//var0; =>
-//LDY #2
-//LDA (framePtr),Y
-
-//variable expression
-LDA #4
-LDY #2
-STA (framePtr),Y
-
-LDA #3
-INY
-STA (framePtr),Y
-
-//alloc 3 more bytes, and set to #A, #B, #C
-
-JSR pushStackFrame
-LDA #3
-JSR alloca
-
-//variable expression
-LDA #$A
-LDY #2
-STA (framePtr),Y
-
-LDA #$B
-INY
-STA (framePtr),Y
-
-LDA #$C
-INY
-STA (framePtr),Y
-
-
-JSR popStackFrame
-
-BRK
-
+export const stackAssembly: string[] =`
+// STACK CODE
 defineAddress framePtr: $00
 defineAddress framePtrHI: $01
 defineAddress stackPtr: $02
@@ -53,8 +12,11 @@ defineAddress stackPtrHI: $03
     LDA #$40
     STA stackPtrHI
     STA framePtrHI
-    //fall down to pushStackFrame
+    LDA #0
+    //fall down into pushStackFrame
+//arg size - allocates A bytes on the stack (for params)
 @pushStackFrame
+    PHA
     // write framePtr to next 2 bytes of stack
     LDY #0
     LDA framePtr
@@ -62,36 +24,16 @@ defineAddress stackPtrHI: $03
     INY
     LDA framePtrHI
     STA (stackPtr),Y
-
     //set frame ptr to stack ptr
     LDA stackPtr
     STA framePtr
     LDA stackPtrHI
     STA framePtrHI
-
-    LDA #2
-    JSR alloca
-
-    RTS
-
-@popStackFrame
-    // set stackPtr to framePtr
-    LDA framePtr
-    STA stackPtr
-    LDA framePtrHI
-    STA stackPtrHI
-
-    // set framePtr to first two bytes of old frame
-    LDY #0
-    LDA (stackPtr),Y
-    STA framePtr
-    INY
-    LDA (stackPtrHI),Y
-    STA framePtrHI
-
-    RTS
-
-//arg size - allocates A bytes
+    CLC
+    PLA
+    ADC #2
+    //fall down into malloc
+//arg size - allocates A bytes on the stack
 @alloca
     //move stackPtr down A bytes
     CLC
@@ -100,5 +42,20 @@ defineAddress stackPtrHI: $03
     LDA #0
     ADC stackPtrHI
     STA stackPtrHI
-
     RTS
+@popStackFrame
+    PHA
+    // set stackPtr to framePtr
+    LDA framePtr
+    STA stackPtr
+    LDA framePtrHI
+    STA stackPtrHI
+    // set framePtr to first two bytes of old frame
+    LDY #0
+    LDA (stackPtr),Y
+    STA framePtr
+    INY
+    LDA (stackPtr),Y
+    STA framePtrHI
+    PLA
+    RTS`.split('\n')

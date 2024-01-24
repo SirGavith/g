@@ -46,10 +46,19 @@ export class FuncCallExpression extends Expression {
         return returnType
     }
 
-    override getAssembly(): string[] {
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
         return [
-            //DO SOMETHING WITH PARAMS
-            `JSR ${this.Identifier}`
+            //load params
+            //currently only works for 1 byte params (are all params 1 byte?)
+            `LDA #${this.Parameters.length}`,
+            `JSR pushStackFrame`,
+            ...this.Parameters.flatMap((param, i) => [
+                ...param.getAssembly(variableFrameLocationMap),
+                `LDY #${i + 2}`,
+                `STA (framePtr),Y`,
+            ]),
+            `JSR ${this.Identifier}`,
+            `JSR popStackFrame`,
         ]
     }
 }

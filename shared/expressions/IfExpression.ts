@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError, forEachScopedExprOnDelim } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { randomIdentifier } from "../../compiler/compiler"
+import { nextArbitraryIdentifier } from "../../compiler/compiler"
 
 export class IfExpression extends Expression {
     override ExpressionType: ExpressionTypes.If = ExpressionTypes.If
@@ -56,29 +56,29 @@ export class IfExpression extends Expression {
         return 'void'
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
-        const end_name = `endif` + randomIdentifier()
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        const end_name = `endif` + nextArbitraryIdentifier()
 
         if (!this.ElseExpression) {
             return [
-                ...this.Condition.getAssembly(newVariableNameMap),
+                ...this.Condition.getAssembly(variableFrameLocationMap),
                 `BEQ ${end_name}`,
                 //true case
-                ...this.Body.getAssembly(newVariableNameMap),
+                ...this.Body.getAssembly(variableFrameLocationMap),
                 `@${end_name}`,
             ]
         }
         else {
-            const else_name = `else` + randomIdentifier()
+            const else_name = `else` + nextArbitraryIdentifier()
             return [
-                ...this.Condition.getAssembly(newVariableNameMap),
+                ...this.Condition.getAssembly(variableFrameLocationMap),
                 `BEQ ${else_name}`,
                 //true case
-                ...this.Body.getAssembly(newVariableNameMap),
+                ...this.Body.getAssembly(variableFrameLocationMap),
                 `JMP ${end_name}`,
                 `@${else_name}`,
-                //false case
-                ...this.ElseExpression.getAssembly(newVariableNameMap),
+                //else case
+                ...this.ElseExpression.getAssembly(variableFrameLocationMap),
                 `@${end_name}`,
             ]
         }

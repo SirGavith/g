@@ -95,8 +95,8 @@ export class OperatorOverloadExpression extends Expression {
         throw new CompilerError('tried to get type of operator overload')
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
-        const varMap = newVariableNameMap.Copy()
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        const varMap = variableFrameLocationMap.Copy()
         this.Parameters.forEach(p => {
             varMap.set(p.Identifier, p.AssemblyName!)
         })

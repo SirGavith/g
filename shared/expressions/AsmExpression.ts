@@ -36,12 +36,12 @@ export class AsmExpression extends Expression {
         return 'byte'
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
         return this.Body.map(l => {
             const [_, id] = l.split(' ')
-            if (newVariableNameMap.has(id)) {
-                return l.replace(id, newVariableNameMap.get(id)!)
-            }
+            // if (newVariableNameMap.has(id)) {
+            //     return l.replace(id, newVariableNameMap.get(id)!)
+            // }
             return l
         })
     }

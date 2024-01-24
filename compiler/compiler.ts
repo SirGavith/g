@@ -7,6 +7,7 @@ import { VariableExpression } from "../shared/expressions/VariableExpression";
 import { CustomError } from "glib/dist/Error";
 import { OperatorOverloadExpression } from "../shared/expressions/OperatorOverloadExpression";
 import { randomBytes } from "crypto";
+import { stackAssembly } from './stack'
 
 export class CompilerError extends CustomError {
     constructor(...message: any[]) {
@@ -15,8 +16,9 @@ export class CompilerError extends CustomError {
     }
 }
 
-export function randomIdentifier(): string {
-    return `R` + randomBytes(4).toString('hex')
+const arbIdentifier = 0x1234
+export function nextArbitraryIdentifier(): string {
+    return `R` + arbIdentifier.toString(16)
 }
 
 //to 6502 gassembly
@@ -55,10 +57,15 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
     //map <identifier, type>
     traverse(expression, new Map([]), validTypes, validOperators)
 
+    const variableFrameLocationMap = new Map([['next', 2]])
+
     return [
-        ...expression.getAssembly(new Map),
+        `JSR init_stack\n`,
+        `//Your code starts here:`,
+        ...expression.getAssembly(variableFrameLocationMap),
         `BRK\n\n`,
-        ...validOperators.toArray().flatMap(([_, op]) => op.getAssembly(new Map))
+        ...validOperators.toArray().flatMap(([_, op]) => op.getAssembly(new Map)),
+        ...stackAssembly
     ]
 }
 
@@ -66,9 +73,10 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
 // vars, functions, 
 function traverse (exp: Expression, identifiers: Map<string, string>, validTypes: Map<string, number>, validOperators: Map<string, OperatorOverloadExpression>) {
     // hoist structs  
+
     // if (exp.ExpressionType === ExpressionTypes.Compound) {
     //     exp.Children.sort((a, b) => {
-    //         if (a.ExpressionType === ExpressionTypes.Struct) return -1
+    //         if (a.ExpressionType === ExpressionTypes.Struct) return 1
     //         return 0
     //     })
     // }
@@ -92,6 +100,7 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
             identifiers.set(func.Identifier, func.ReturnType)
             func.Parameters.forEach(param => {
                 childIdentifiers.set(param.Identifier, param.Type)
+                param.Size = validTypes.get(param.Type)
             })
         }
         else if (child.ExpressionType === ExpressionTypes.Variable) {

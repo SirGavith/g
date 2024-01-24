@@ -28,8 +28,8 @@ export class ReturnExpression extends Expression {
         return this.Expression?.getType(identifiers, validOperators)
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
-        return (this.Expression?.getAssembly(newVariableNameMap) ?? []).concat([
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        return (this.Expression?.getAssembly(variableFrameLocationMap) ?? []).concat([
             `RTS`
         ])
     }

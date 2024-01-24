@@ -25,9 +25,12 @@ export class VariableExpression extends Expression {
         return type
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        if (!variableFrameLocationMap.has(this.Identifier))
+            throw new CompilerError('code path should not be reached')
         return [
-            `LDA ${newVariableNameMap.get(this.Identifier) ?? this.Identifier}`
+            `LDY #${variableFrameLocationMap.get(this.Identifier)!}`,
+            `LDA (framePtr),Y`
         ]
     }
 }

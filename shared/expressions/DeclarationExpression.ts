@@ -60,14 +60,15 @@ export class DeclarationExpression extends Expression {
         return this.Type
     }
 
-    override getAssembly(): string[] {
-        if (this.Size === 1) {
-            return [
-                `alloc ${this.Identifier}`
-            ]
-        }
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        if (!this.Size)
+            throw new CompilerError(`do not know size of vairbale ${this.Identifier}`)
+        const next = variableFrameLocationMap.get('next')!
+        variableFrameLocationMap.set(this.Identifier, next)
+        variableFrameLocationMap.set('default', next + this.Size)
         return [
-            `alloc ${this.Identifier}[${this.Size}]`
+            `LDA #${this.Size}`,
+            `JSR alloca`
         ]
     }
 }

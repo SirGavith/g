@@ -1,4 +1,4 @@
-import { CompilerError } from '../../compiler/compiler'
+import { CompilerError, nextArbitraryIdentifier } from '../../compiler/compiler'
 import { Operators } from '../operators'
 import * as Console from 'glib/dist/Console'
 import { OperatorOverloadExpression } from './OperatorOverloadExpression'
@@ -28,7 +28,7 @@ export abstract class Expression {
     Log(indent: number = 0): void {}
 
     getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string { throw new CompilerError }
-    getAssembly(newVariableNameMap: Map<string, string>): string[] { throw new CompilerError}  
+    getAssembly(variableFrameLocationMap: Map<string, number>): string[] { throw new CompilerError}  
 }
 
 export class CompoundExpression extends Expression {
@@ -52,7 +52,19 @@ export class CompoundExpression extends Expression {
         return 'void'
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
-        return this.Children.flatMap(child => child.getAssembly(newVariableNameMap))
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        const endName = 'END_'+nextArbitraryIdentifier()
+        return [
+            ...this.Children.flatMap(child => {
+                if (child.ExpressionType === ExpressionTypes.Func) return []
+                return child.getAssembly(variableFrameLocationMap)
+            }),
+            `JMP ${endName}`,
+            ...this.Children.flatMap(child => {
+                if (child.ExpressionType !== ExpressionTypes.Func) return []
+                return child.getAssembly(variableFrameLocationMap)
+            }),
+            `@${endName}`,
+        ]
     }
 }

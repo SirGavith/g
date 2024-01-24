@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError, forEachScopedExprOnDelim } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { randomIdentifier } from "../../compiler/compiler"
+import { nextArbitraryIdentifier } from "../../compiler/compiler"
 
 export class WhileExpression extends Expression {
     override ExpressionType: ExpressionTypes.While = ExpressionTypes.While
@@ -42,15 +42,15 @@ export class WhileExpression extends Expression {
         return 'void'
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
-        const while_name = `while` + randomIdentifier()
-        const end_name = `endwhile` + randomIdentifier()
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        const while_name = `while` + nextArbitraryIdentifier()
+        const end_name = `endwhile` + nextArbitraryIdentifier()
 
         return [
             `@${while_name}`,
-            ...this.Condition.getAssembly(newVariableNameMap),
+            ...this.Condition.getAssembly(variableFrameLocationMap),
             `BEQ ${end_name}`,
-            ...this.Body.getAssembly(newVariableNameMap),
+            ...this.Body.getAssembly(variableFrameLocationMap),
             `JMP ${while_name}`,
             `@${end_name}`,
         ]

@@ -1,10 +1,12 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
+import { CompilerError } from "../../compiler/compiler"
 
 export interface FuncParameter {
     Type: string
     Identifier: string
+    Size?: number
 }
 
 export class FuncExpression extends Expression {
@@ -65,10 +67,18 @@ export class FuncExpression extends Expression {
         return 'void'
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+        const newMap = new Map<string, number>()
+        let next = 2
+        this.Parameters.forEach(param => {
+            if (!param.Size)
+                throw new CompilerError('code path should not be reachable')
+            newMap.set(param.Identifier, next)
+            next += param.Size
+        })
+        newMap.set('next', next)
         return [
-            //SOMETHING WITH PARAMS??
             `@${this.Identifier}`,
-        ].concat(this.Body.getAssembly(newVariableNameMap))
+            ...this.Body.getAssembly(newMap),        ]
     }
 }

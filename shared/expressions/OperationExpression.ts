@@ -52,7 +52,7 @@ export class OperationExpression extends Expression {
         return this.OperatorOverload.ReturnType
     }
 
-    override getAssembly(newVariableNameMap: Map<string, string>): string[] {
+    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
         if (this.OperatorOverload === undefined) throw new CompilerError('getting assembly without type coercion')
 
 
@@ -62,9 +62,9 @@ export class OperationExpression extends Expression {
             if (binarySetOperators.has(this.Operator)) {
                 return [
                     `// ${operatorMapOprString.get(this.Operator)}`,
-                    ...this.Operand.getAssembly(newVariableNameMap),
+                    ...this.Operand.getAssembly(variableFrameLocationMap),
                     `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
-                    ...this.Operand2.getAssembly(newVariableNameMap),
+                    ...this.Operand2.getAssembly(variableFrameLocationMap),
                     `STA ${this.OperatorOverload.Parameters[1].AssemblyName}`,
                     `JSR ${this.OperatorOverload.AssemblyName}`,
                     `STA ${(this.Operand as VariableExpression).Identifier}`,
@@ -72,9 +72,9 @@ export class OperationExpression extends Expression {
             }
             return [
                 `// ${operatorMapOprString.get(this.Operator)}`,
-                ...this.Operand.getAssembly(newVariableNameMap),
+                ...this.Operand.getAssembly(variableFrameLocationMap),
                 `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
-                ...this.Operand2.getAssembly(newVariableNameMap),
+                ...this.Operand2.getAssembly(variableFrameLocationMap),
                 `STA ${this.OperatorOverload.Parameters[1].AssemblyName}`,
                 `JSR ${this.OperatorOverload.AssemblyName}`,
             ]
