@@ -50,7 +50,7 @@ const assmStartTime = process.hrtime();
 const [ROM, codeLength] = Assemble(assembly, inFileDir)
 
 // Write binary
-const outFilePath = inFilePath.slice(0, -2) + 'gbin'
+const outFilePath = inFilePath.slice(0, -1) + 'gbin'
 fs.writeFileSync(outFilePath, ROM)
 
 const assmTime = process.hrtime(assmStartTime)

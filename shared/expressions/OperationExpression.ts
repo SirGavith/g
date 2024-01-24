@@ -40,11 +40,12 @@ export class OperationExpression extends Expression {
             this.Operand.ExpressionType !== ExpressionTypes.Variable)
                 throw new CompilerError('set operators must have a variable on the left')
 
-        const hashString = `${this.Operator};${operandType},${operand2Type}`
+        const hashString = this.Operand2 ? `${this.Operator};${operandType},${operand2Type}` :
+            `${this.Operator};${operandType}` 
 
         this.OperatorOverload = validOperators.get(hashString)
         if (this.OperatorOverload === undefined) {
-            throw new CompilerError(`did not find overload for operation ${this.Operator} for (${operandType}, ${operand2Type})`)
+            throw new CompilerError(`did not find overload for operation ${this.Operator} for (${operandType}, ${operand2Type}); Did you mean in include a library?`)
         }
 
         // console.log(`${operandType} ${operatorMapOprString.get(this.Operator)} ${operand2Type} => ${this.OperatorOverload.ReturnType}`)

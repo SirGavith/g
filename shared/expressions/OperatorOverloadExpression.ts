@@ -101,11 +101,20 @@ export class OperatorOverloadExpression extends Expression {
             varMap.set(p.Identifier, p.AssemblyName!)
         })
 
-        return [
-            `alloc ${this.Parameters[0].AssemblyName}`,
-            `alloc ${this.Parameters[1].AssemblyName}`,
-            `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ') }`,
-            `@${this.AssemblyName}`,
-        ].concat(this.Body.getAssembly(varMap), '')
+        if (this.Parameters.length === 1) {
+            return [
+                `alloc ${this.Parameters[0].AssemblyName}`,
+                `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ')}`,
+                `@${this.AssemblyName}`,
+            ].concat(this.Body.getAssembly(varMap), '')
+        }
+        else {
+            return [
+                `alloc ${this.Parameters[0].AssemblyName}`,
+                `alloc ${this.Parameters[1].AssemblyName}`,
+                `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ') }`,
+                `@${this.AssemblyName}`,
+            ].concat(this.Body.getAssembly(varMap), '')
+        }
     }
 }

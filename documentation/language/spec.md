@@ -67,6 +67,9 @@ let byte c = 20;
 
 ## Expressions
 
+## The stack
+- What I need is runtime allocation on the stack.
+
 
 ## Functions
 - Functions are not in a class
@@ -120,7 +123,14 @@ class XY : XY_struct {
 
 ### Operator Overload Functions
 - Special functions that define operators
-- 
+- Need to think a little more about how these work under the hood
+```
+operator == (byte a, byte b) {
+    // check for equality
+    return aEQb
+}
+```
+
 
 ## Asm
 - Include assembly in your code

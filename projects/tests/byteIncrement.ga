@@ -1,0 +1,109 @@
+alloc i
+// =
+LDA i
+STA OPR_byte_byte_14_n1
+LDA #$0
+STA OPR_byte_byte_14_n2
+JSR OPR_byte_byte_14
+STA i
+@whileR1b774f5b
+// <
+LDA i
+STA OPR_byte_byte_20_a
+LDA #$a
+STA OPR_byte_byte_20_b
+JSR OPR_byte_byte_20
+BEQ endwhileRc869c9b7
+LDA i
+STA OPR_byte_12_n1
+JSR OPR_byte_12
+STA i
+JMP whileR1b774f5b
+@endwhileRc869c9b7
+// ==
+LDA i
+STA OPR_byte_byte_15_a
+LDA #$a
+STA OPR_byte_byte_15_b
+JSR OPR_byte_byte_15
+BRK
+
+
+alloc OPR_byte_byte_14_n1
+alloc OPR_byte_byte_14_n2
+// operator = byte byte
+@OPR_byte_byte_14
+LDA OPR_byte_byte_14_n2
+RTS
+
+alloc OPR_byte_byte_2_n1
+alloc OPR_byte_byte_2_n2
+// operator + byte byte
+@OPR_byte_byte_2
+CLC
+LDA OPR_byte_byte_2_n1
+ADC OPR_byte_byte_2_n2
+RTS
+
+alloc OPR_byte_byte_3_n1
+alloc OPR_byte_byte_3_n2
+// operator += byte byte
+@OPR_byte_byte_3
+CLC
+LDA OPR_byte_byte_3_n1
+ADC OPR_byte_byte_3_n2
+RTS
+
+alloc OPR_byte_12_n1
+// operator ++ byte
+@OPR_byte_12
+INC OPR_byte_12_n1
+RTS
+
+alloc OPR_byte_byte_4_n1
+alloc OPR_byte_byte_4_n2
+// operator - byte byte
+@OPR_byte_byte_4
+SEC
+LDA OPR_byte_byte_4_n1
+SBC OPR_byte_byte_4_n2
+RTS
+
+alloc OPR_byte_byte_15_a
+alloc OPR_byte_byte_15_b
+// operator == byte byte
+@OPR_byte_byte_15
+LDA OPR_byte_byte_15_a
+CMP OPR_byte_byte_15_b
+BNE not_eq_byteEQbyte
+LDA #1
+RTS
+@not_eq_byteEQbyte
+LDA #0
+RTS
+
+alloc OPR_byte_byte_16_a
+alloc OPR_byte_byte_16_b
+// operator != byte byte
+@OPR_byte_byte_16
+LDA OPR_byte_byte_16_a
+CMP OPR_byte_byte_16_b
+BNE not_eq_byteNEQbyte
+LDA #0
+RTS
+@not_eq_byteNEQbyte
+LDA #1
+RTS
+
+alloc OPR_byte_byte_20_a
+alloc OPR_byte_byte_20_b
+// operator < byte byte
+@OPR_byte_byte_20
+LDA OPR_byte_byte_20_a
+CMP OPR_byte_byte_20_b
+BCC not_eq_byteLTHANbyte
+LDA #0
+RTS
+@not_eq_byteLTHANbyte
+LDA #1
+RTS

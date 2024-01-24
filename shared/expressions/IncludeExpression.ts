@@ -9,9 +9,6 @@ export function IncludeExpression(rest: string | undefined, fileDir: string): Ex
         throw new LexerError('include must have a body')
 
     const filePath = path.join(fileDir, rest)
-    console.log()
-
-
     const file = fs.readFileSync(filePath, 'utf-8').replaceAll('\r', '')
     const exp = Lexer(file, fileDir)
     if (exp.ExpressionType === ExpressionTypes.Compound)

@@ -1,3 +1,5 @@
+include ../libs/byte.g;
+
 let byte a = 4;
 let byte b = 1;
 

@@ -3,7 +3,6 @@ import { Assemble, AssemblerError } from '../assembler/assembler'
 import { Emu6502 } from '../emulator/emulator'
 import * as Console from 'glib/dist/Console'
 
-
 //Assemble and run current file
 const loadStartTime = process.hrtime();
 const [inFilePath, inFileDir] = process.argv.slice(2)

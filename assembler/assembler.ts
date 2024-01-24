@@ -13,13 +13,13 @@ function ParseNumber(number: string, oi: number): number {
         throw new AssemblerError(`Expected number on line ${oi}`)
     let n = number.trim()
     let int: number | null = null
-    if (n.startsWith('$')) { // hex
+    if (/^\$[\da-fA-F]+$/g.test(n)) { // hex
         int = Number.parseInt(n.slice(1), 16)
     }
-    else if (n.startsWith('%')) { // bin
+    else if (/^%[01]+$/g.test(n)) { // bin
         int = Number.parseInt(n.slice(1), 2)
     }
-    else { // dec
+    else if (/^\d+$/g.test(n)) {
         int = Number.parseInt(n, 10)
     }
     if (int === null || Number.isNaN(int))
@@ -275,8 +275,8 @@ export function Assemble(rawAssembly: string, filePath: string): [Buffer, number
                     opr = operand.slice(1, -1)
                 }
                 else throw new AssemblerError(`Could not understand operand ${operand} on line ${oi}`)
-                operandValue = allocMapping.has(opr) ?
-                    allocMapping.get(opr)! :
+                operandValue = allocMapping.get(opr) ??
+                    defineAddressMapping.get(opr) ??
                     ParseNumber(opr, oi)
             }
             else if (operand.startsWith('#')) {
@@ -339,7 +339,10 @@ export function Assemble(rawAssembly: string, filePath: string): [Buffer, number
             }
             else if (defineAddressMapping.has(operand)) {
                 operandValue = defineAddressMapping.get(operand)!
-                addressMode = AddressModes.Absolute
+                addressMode =  (operandValue < 0x100 && instructionSignatures.has(AddressModes.ZeropageR)) ?
+                    AddressModes.ZeropageR :
+                    AddressModes.Absolute
+
                 if (!instructionSignatures.has(addressMode))
                     throw new AssemblerError(`DefineAddresses only work as absolute addresses; line ${oi}`)
             }

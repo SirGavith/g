@@ -70,9 +70,10 @@ export class Emu6502 {
                 ' A  X  Y  SP |' +
                 ' NV-BDIZC |' +
                 // ' Output B         | ' +
-                // ' Zpage |' +
+                ' Zpage       |' +
                 // ' $6000 -' +
-                ' $200 -'
+                // ' $200 -'
+                '$4000 -'
             )
         }
 
@@ -160,13 +161,21 @@ export class Emu6502 {
         this.Instructions[opcode]()
 
         if (this.Debug) {
-            const zWatchArr = [], sWatchArr = [], watchArr = [], oWatchArr = []
-            for (const val of this.Storage.slice(0x00, 0x02)) {
+            const zWatchArr = [], sWatchArr = [], mySWatchArr: string[] = [], watchArr = [], oWatchArr = []
+            for (const val of this.Storage.slice(0x00, 0x04)) {
                 zWatchArr.push(this.ToString(val, 2, 16))
             }
             for (const val of this.Storage.slice(0x1FB, 0x200)) {
                 sWatchArr.push(this.ToString(val, 2, 16))
             }
+            this.Storage.slice(0x4000, 0x400a).forEach((val, i) => {
+                mySWatchArr.push(this.ToString(val, 2, 16,
+                    this.getRAMWord(0) === 0x4000 + i ? Console.Yellow :
+                    this.getRAMWord(2) === 0x4000 + i ? Console.Magenta :
+                    undefined
+                    ))
+            })
+
             for (const val of this.Storage.slice(0x6000, 0x6004)) {
                 oWatchArr.push(this.ToString(val, 2, 16))
             }
@@ -191,10 +200,11 @@ export class Emu6502 {
                 this.ToString(this.SR, 8,  2) + ' | ' +
                 //watches
                 // [...this.Storage[0x6000].toString(2).padStart(8, '0')].map((c, i) => (this.Storage[0x6002] >> 8 - i - 1 > 0) ? (c === '1' ? '🔴' : '⚪') : '⚫').join('') + ' | ' +
-                // zWatchArr.join(',') + ' | ' +
+                zWatchArr.join(',') + ' | ' +
                 // sWatchArr.join(',') + ' | ' +
-                watchArr.join(',')
+                // watchArr.join(',')
                 // oWatchArr.join(',')
+                mySWatchArr.join(',')
             )
         }
     }
@@ -230,7 +240,7 @@ export class Emu6502 {
                 return Console.White + bit + Console.Reset
             }).join('')
         }
-        if (n === 0) color = Console.Dim
+        if (n === 0 && !color) color = Console.Dim
 
         if (color !== undefined) {
             return color + n.toString(base).padStart(length, '0') + Console.Reset

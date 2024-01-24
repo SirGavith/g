@@ -1,0 +1,17 @@
+// +
+LDA #$4
+STA OPR_byte_byte_2_n1
+LDA #$3
+STA OPR_byte_byte_2_n2
+JSR OPR_byte_byte_2
+BRK
+
+
+alloc OPR_byte_byte_2_n1
+alloc OPR_byte_byte_2_n2
+// operator + byte byte
+@OPR_byte_byte_2
+CLC
+LDA OPR_byte_byte_2_n1
+ADC OPR_byte_byte_2_n2
+RTS

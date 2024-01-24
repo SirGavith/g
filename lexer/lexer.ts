@@ -143,12 +143,15 @@ function tokenizeExpr(expr: string): Expression[] {
             else if (char === ')') parenDepth--
             else if (parenDepth !== 0) continue
             //check before endsWith??
-            const r = expr.slice(0, i)
+            const r = expr.slice(0, i + 1)
             for (const [oprString, operator] of operatorMapStringOpr) {
                 if (r.endsWith(oprString)) {
+                    const operand1 = expr.slice(0, i + 1 - oprString.length).trim()
+                    const operand2 = expr.slice(i + 1).trim()
+
                     return [new OperationExpression(operator,
-                        parseExpr(expr.slice(0, i - oprString.length).trim()),
-                        parseExpr(expr.slice(i).trim())
+                        parseExpr(operand1 || operand2),
+                        (operand2 ? parseExpr(operand2) : undefined)
                     )]
                 }
             }
