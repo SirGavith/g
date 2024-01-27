@@ -2,7 +2,7 @@ import { Expression, ExpressionTypes } from "./Expressions"
 import { DeclarationExpression } from "./DeclarationExpression"
 import { parseExpr, LexerError } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { CompilerError } from "../../compiler/compiler"
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 export class StructExpression extends Expression {
     override ExpressionType: ExpressionTypes.Struct = ExpressionTypes.Struct
@@ -39,15 +39,12 @@ export class StructExpression extends Expression {
         })
     }
 
-    override getType(identifiers: Map<string, string>): string {
-        throw new CompilerError('tried to get type of struct')
-    }
-
     getSize() {
         return this.Members.length // FOR ARRAYS THIS NEEDS TO CHANGE
     }
 
-    override getAssembly(): string[] {
-        throw new CompilerError('tried to get assembly of struct')
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        throw new CompilerError('recursed on a struct')
+
     }
 }

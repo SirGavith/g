@@ -1,4 +1,4 @@
-import { CompilerError, nextArbitraryIdentifier } from '../../compiler/compiler'
+import { CompilerError, nextArbitraryIdentifier, recursionReturn, recursionBody } from '../../compiler/compiler'
 import { Operators } from '../operators'
 import * as Console from 'glib/dist/Console'
 import { OperatorOverloadExpression } from './OperatorOverloadExpression'
@@ -27,8 +27,9 @@ export abstract class Expression {
     Children: Expression[] = []
     Log(indent: number = 0): void {}
 
-    getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string { throw new CompilerError }
-    getAssembly(variableFrameLocationMap: Map<string, number>): string[] { throw new CompilerError}  
+    // getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string { throw new CompilerError }
+    // getAssembly(variableFrameLocationMap: Map<string, number>): string[] { throw new CompilerError}  
+    traverse(recursionBody: recursionBody): recursionReturn { throw new CompilerError }
 }
 
 export class CompoundExpression extends Expression {
@@ -48,23 +49,25 @@ export class CompoundExpression extends Expression {
         console.log(' '.repeat(indent) + ']')
     }
 
-    override getType(identifiers: Map<string, string>) {
-        return 'void'
-    }
+    override traverse(recursionBody: recursionBody): recursionReturn {
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        const endName = 'END_'+nextArbitraryIdentifier()
-        return [
-            ...this.Children.flatMap(child => {
-                if (child.ExpressionType === ExpressionTypes.Func) return []
-                return child.getAssembly(variableFrameLocationMap)
-            }),
-            `JMP ${endName}`,
-            ...this.Children.flatMap(child => {
-                if (child.ExpressionType !== ExpressionTypes.Func) return []
-                return child.getAssembly(variableFrameLocationMap)
-            }),
-            `@${endName}`,
-        ]
+        const endName = 'END_' + nextArbitraryIdentifier()
+
+
+        return {
+            Assembly: [
+                ...this.Children.flatMap(child => {
+                    if (child.ExpressionType === ExpressionTypes.Func) return []
+                    return child.traverse(recursionBody).Assembly
+                }),
+                `JMP ${endName}`,
+                ...this.Children.flatMap(child => {
+                    if (child.ExpressionType !== ExpressionTypes.Func) return []
+                    return child.traverse(recursionBody).Assembly
+                }),
+                `@${endName}`,
+            ],
+            ReturnType: 'void'
+        }
     }
 }

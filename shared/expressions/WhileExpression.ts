@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError, forEachScopedExprOnDelim } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { nextArbitraryIdentifier } from "../../compiler/compiler"
+import { nextArbitraryIdentifier, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 export class WhileExpression extends Expression {
     override ExpressionType: ExpressionTypes.While = ExpressionTypes.While
@@ -38,21 +38,22 @@ export class WhileExpression extends Expression {
         this.Body.Log(indent + 1)
     }
 
-    override getType(identifiers: Map<string, string>) {
-        return 'void'
-    }
-
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+    override traverse(recursionBody: recursionBody): recursionReturn {
         const while_name = `while` + nextArbitraryIdentifier()
         const end_name = `endwhile` + nextArbitraryIdentifier()
+        const condition = this.Body.traverse(recursionBody)
+        const body = this.Body.traverse(recursionBody)
 
-        return [
-            `@${while_name}`,
-            ...this.Condition.getAssembly(variableFrameLocationMap),
-            `BEQ ${end_name}`,
-            ...this.Body.getAssembly(variableFrameLocationMap),
-            `JMP ${while_name}`,
-            `@${end_name}`,
-        ]
+        return {
+            Assembly: [
+                `@${while_name}`,
+                ...condition.Assembly,
+                `BEQ ${end_name}`,
+                ...body.Assembly,
+                `JMP ${while_name}`,
+                `@${end_name}`,
+            ],
+            ReturnType: 'void'
+        }
     }
 }

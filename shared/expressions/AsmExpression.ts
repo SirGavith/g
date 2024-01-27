@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { CompilerError } from "../../compiler/compiler"
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 
 export class AsmExpression extends Expression {
@@ -32,17 +32,17 @@ export class AsmExpression extends Expression {
 
     }
 
-    override getType(identifiers: Map<string, string>) {
-        return 'byte'
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        return {
+            Assembly: this.Body.map(l => {
+                const [_, id] = l.split(' ')
+                // if (newVariableNameMap.has(id)) {
+                //     return l.replace(id, newVariableNameMap.get(id)!)
+                // }
+                return l
+            }),
+            ReturnType: 'byte'
+        }
     }
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        return this.Body.map(l => {
-            const [_, id] = l.split(' ')
-            // if (newVariableNameMap.has(id)) {
-            //     return l.replace(id, newVariableNameMap.get(id)!)
-            // }
-            return l
-        })
-    }
 }

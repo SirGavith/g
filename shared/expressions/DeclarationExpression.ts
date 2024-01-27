@@ -4,7 +4,7 @@ import * as Console from 'glib/dist/Console'
 import { OperationExpression } from './OperationExpression'
 import { Operators } from '../operators'
 import { VariableExpression } from './VariableExpression'
-import { CompilerError } from '../../compiler/compiler'
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 
 export class DeclarationExpression extends Expression {
@@ -49,9 +49,7 @@ export class DeclarationExpression extends Expression {
         console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier} ${Console.Magenta + this.Type + Console.Reset}${this.Initializer ? ':' : ''}`)
     }
 
-    override getType(identifiers: Map<string, string>, ) {
-        return 'void'
-    }
+
 
     getVarType(validTypes: Map<string, number>) {
         if (!validTypes.has(this.Type)) 
@@ -60,15 +58,21 @@ export class DeclarationExpression extends Expression {
         return this.Type
     }
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+
+    override traverse(recursionBody: recursionBody): recursionReturn {
+
         if (!this.Size)
             throw new CompilerError(`do not know size of vairbale ${this.Identifier}`)
-        const next = variableFrameLocationMap.get('next')!
-        variableFrameLocationMap.set(this.Identifier, next)
-        variableFrameLocationMap.set('default', next + this.Size)
-        return [
-            `LDA #${this.Size}`,
-            `JSR alloca`
-        ]
+        const next = recursionBody.VariableFrameLocationMap.get('next')!
+        recursionBody.VariableFrameLocationMap.set(this.Identifier, next)
+        recursionBody.VariableFrameLocationMap.set('default', next + this.Size)
+
+        return {
+            Assembly: [
+                `LDA #${this.Size}`,
+                `JSR alloca`
+            ],
+            ReturnType: 'void'
+        }
     }
 }

@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
-import { LexerError, parseExpr } from "../../lexer/lexer"
+import { parseExpr } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { OperatorOverloadExpression } from "./OperatorOverloadExpression"
+import { recursionBody, recursionReturn } from "../../compiler/compiler"
 
 
 export class ReturnExpression extends Expression {
@@ -23,14 +23,15 @@ export class ReturnExpression extends Expression {
         else console.log(' '.repeat(indent + 1) + Console.Magenta + 'void' + Console.Reset)
     }
 
-    override getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string {
-        if (this.Expression === undefined) return 'void'
-        return this.Expression?.getType(identifiers, validOperators)
-    }
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        return (this.Expression?.getAssembly(variableFrameLocationMap) ?? []).concat([
-            `RTS`
-        ])
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        const expr = this.Expression?.traverse(recursionBody)
+
+        return {
+            Assembly: (expr?.Assembly ?? []).concat([
+                `RTS`
+            ]),
+            ReturnType: expr === undefined ? 'void' : expr.ReturnType
+        }
     }
 }

@@ -61,14 +61,29 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
 
     const variableFrameLocationMap = new Map([['next', 2]])
 
+    const a = expression.traverse(variableFrameLocationMap)
+
     return [
         `JSR init_stack\n`,
         `//Your code starts here:`,
-        ...expression.getAssembly(variableFrameLocationMap),
+        ...a,
         `BRK\n\n`,
         ...validOperators.toArray().flatMap(([_, op]) => op.getAssembly(new Map)),
         ...stackAssembly
     ]
+}
+
+export interface recursionBody {
+    VariableFrameLocationMap: Map<string, number>
+    IdentifierType: Map<string, string>,
+    
+    //kinda want function signatures here too
+    OperatorOverloads: Map<string, OperatorOverloadExpression>
+}
+
+export interface recursionReturn {
+    Assembly: string[],
+    ReturnType: string
 }
 
 // identifiers <name, type>

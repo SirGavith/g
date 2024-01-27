@@ -2,7 +2,7 @@ import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
 import { OperatorOverloadExpression } from "./OperatorOverloadExpression"
-import { CompilerError } from "../../compiler/compiler"
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 
 export class VariableExpression extends Expression {
@@ -18,19 +18,19 @@ export class VariableExpression extends Expression {
         console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Red + this.Identifier + Console.Reset}`)
     }
 
-    override getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>): string {
-        const type = identifiers.get(this.Identifier)
-        if (type === undefined)
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        const type = recursionBody.IdentifierType.get(this.Identifier)
+        const frameLocation = recursionBody.VariableFrameLocationMap.get(this.Identifier)!
+        if (type === undefined || frameLocation == undefined)
             throw new CompilerError(`variable '${this.Identifier}' is not declared before usage`)
-        return type
-    }
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        if (!variableFrameLocationMap.has(this.Identifier))
-            throw new CompilerError('code path should not be reached')
-        return [
-            `LDY #${variableFrameLocationMap.get(this.Identifier)!}`,
-            `LDA (framePtr),Y`
-        ]
+
+        return {
+            Assembly: [
+                `LDY #${frameLocation}`,
+                `LDA (framePtr),Y`
+            ],
+            ReturnType: type
+        }
     }
 }

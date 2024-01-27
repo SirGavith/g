@@ -27,4 +27,6 @@ export class ClassExpression extends Expression {
         //     m.Log(indent + 1)
         // })
     }
+
+    
 }

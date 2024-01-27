@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { CompilerError } from "../../compiler/compiler"
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 export interface FuncParameter {
     Type: string
@@ -63,23 +63,26 @@ export class FuncExpression extends Expression {
         this.Body.Log(indent + 1)
     }
 
-    override getType(identifiers: Map<string, string>) {
-        // this is where lambdas could one day go
-        return 'void'
-    }
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        const newRecursionBody = recursionBody.Copy() as recursionBody
+        newRecursionBody.VariableFrameLocationMap = new Map<string, number>()
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        const newMap = new Map<string, number>()
         let next = 2
         this.Parameters.forEach(param => {
-            if (!param.Size)
-                throw new CompilerError('code path should not be reachable')
-            newMap.set(param.Identifier, next)
+            if (!param.Size) throw new CompilerError('parameter has no size')
+            newRecursionBody.VariableFrameLocationMap.set(param.Identifier, next)
             next += param.Size
         })
-        newMap.set('next', next)
-        return [
-            `@${this.Identifier}`,
-            ...this.Body.getAssembly(newMap),        ]
+        newRecursionBody.VariableFrameLocationMap.set('next', next)
+
+        const body = this.Body.traverse(newRecursionBody)
+
+        return {
+            Assembly: [
+                `@${this.Identifier}`,
+                ...body.Assembly,
+            ],
+            ReturnType: 'void'
+        }
     }
 }

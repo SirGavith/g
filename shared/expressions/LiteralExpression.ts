@@ -1,6 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
+import { recursionBody, recursionReturn } from "../../compiler/compiler"
 
 export class LiteralExpression extends Expression {
     override ExpressionType: ExpressionTypes.Literal = ExpressionTypes.Literal
@@ -15,13 +16,12 @@ export class LiteralExpression extends Expression {
         console.log(' '.repeat(indent) + `${Console.Cyan + ExpressionTypes[this.ExpressionType]} ${Console.Yellow + this.Value + Console.Reset}`)
     }
 
-    override getType(identifiers: Map<string, string>) {
-        return 'byte'
-    }
-
-    override getAssembly(): string[] {
-        return [
-            `LDA #$${this.Value.toString(16)}`
-        ]
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        return {
+            Assembly: [
+                `LDA #$${this.Value.toString(16)}`
+            ],
+            ReturnType: 'byte'
+        }
     }
 }

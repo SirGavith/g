@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { parseExpr, LexerError, forEachScopedExprOnDelim } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { nextArbitraryIdentifier } from "../../compiler/compiler"
+import { nextArbitraryIdentifier, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 export class IfExpression extends Expression {
     override ExpressionType: ExpressionTypes.If = ExpressionTypes.If
@@ -52,35 +52,29 @@ export class IfExpression extends Expression {
         }
     }
 
-    override getType(identifiers: Map<string, string>) {
-        return 'void'
-    }
-
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
+    override traverse(recursionBody: recursionBody): recursionReturn {
         const end_name = `endif` + nextArbitraryIdentifier()
+        const else_name = `else` + nextArbitraryIdentifier()
 
-        if (!this.ElseExpression) {
-            return [
-                ...this.Condition.getAssembly(variableFrameLocationMap),
+        return {
+            Assembly: !this.ElseExpression ? [
+                ...this.Condition.traverse(recursionBody).Assembly,
                 `BEQ ${end_name}`,
                 //true case
-                ...this.Body.getAssembly(variableFrameLocationMap),
+                ...this.Body.traverse(recursionBody).Assembly,
                 `@${end_name}`,
-            ]
-        }
-        else {
-            const else_name = `else` + nextArbitraryIdentifier()
-            return [
-                ...this.Condition.getAssembly(variableFrameLocationMap),
+            ] : [
+                ...this.Condition.traverse(recursionBody).Assembly,
                 `BEQ ${else_name}`,
                 //true case
-                ...this.Body.getAssembly(variableFrameLocationMap),
+                ...this.Body.traverse(recursionBody).Assembly,
                 `JMP ${end_name}`,
                 `@${else_name}`,
                 //else case
-                ...this.ElseExpression.getAssembly(variableFrameLocationMap),
+                ...this.ElseExpression.traverse(recursionBody).Assembly,
                 `@${end_name}`,
-            ]
+            ],
+            ReturnType: 'void'
         }
     }
 }

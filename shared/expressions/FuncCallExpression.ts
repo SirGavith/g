@@ -1,7 +1,7 @@
 import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, forEachScopedExprOnDelim, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 import * as Console from 'glib/dist/Console'
-import { CompilerError } from "../../compiler/compiler"
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
 
 export class FuncCallExpression extends Expression {
@@ -39,25 +39,31 @@ export class FuncCallExpression extends Expression {
         })
     }
 
-    override getType(identifiers: Map<string, string>) {
-        const returnType = identifiers.get(this.Identifier)
-        if (returnType === undefined)
-            throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
-        return returnType
-    }
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        return [
-            //load params
-            `LDA #${this.Parameters.length}`,
-            ...this.Parameters.flatMap((param, i) => [
-                ...param.getAssembly(variableFrameLocationMap),
-                `LDY #${i + 2}`,
-                `STA (stackPtr),Y`,
-            ]),
-            `JSR pushStackFrame`,
-            `JSR ${this.Identifier}`,
-            `JSR popStackFrame`,
-        ]
+    override traverse(recursionBody: recursionBody): recursionReturn {
+        const returnType = recursionBody.IdentifierType.get(this.Identifier)
+        
+        if (returnType === undefined)
+        throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
+    
+        const params = this.Parameters.map(p => p.traverse(recursionBody))
+        //really want function signature here to typecheck params
+        if (params.some(p => ))
+
+        return {
+            Assembly: [
+                //load params
+                `LDA #${this.Parameters.length}`,
+                ...params.flatMap((p, i) => [
+                    ...p.Assembly,
+                    `LDY #${i + 2}`,
+                    `STA (stackPtr),Y`,
+                ]),
+                `JSR pushStackFrame`,
+                `JSR ${this.Identifier}`,
+                `JSR popStackFrame`,
+            ],
+            ReturnType: returnType
+        }
     }
 }

@@ -3,7 +3,7 @@ import { parseExpr, LexerError } from "../../lexer/lexer"
 import { Operators, binaryOperators, binarySetOperators, operatorMapOprString } from "../operators"
 import * as Console from 'glib/dist/Console'
 import { OperatorOverloadExpression } from "./OperatorOverloadExpression"
-import { CompilerError } from "../../compiler/compiler"
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 import { VariableExpression } from "./VariableExpression"
 
 
@@ -32,61 +32,64 @@ export class OperationExpression extends Expression {
         this.Operand2?.Log(indent + 1)
     }
 
-    override getType(identifiers: Map<string, string>, validOperators: Map<string, OperatorOverloadExpression>) {
-        const operandType = this.Operand.getType(identifiers, validOperators)
-        const operand2Type = this.Operand2?.getType(identifiers, validOperators)
+    override traverse(recursionBody: recursionBody): recursionReturn {
+
+        const operand1 = this.Operand.traverse(recursionBody)
+        const operand2 = this.Operand2?.traverse(recursionBody)
 
         if (binarySetOperators.has(this.Operator) &&
             this.Operand.ExpressionType !== ExpressionTypes.Variable)
-                throw new CompilerError('set operators must have a variable on the left')
+            throw new CompilerError('set operators must have a variable on the left')
 
-        const hashString = this.Operand2 ? `${this.Operator};${operandType},${operand2Type}` :
-            `${this.Operator};${operandType}` 
+        const hashString = this.Operand2 ? `${this.Operator};${operand1.ReturnType},${operand2?.ReturnType}` :
+            `${this.Operator};${operand1.ReturnType}`
 
-        this.OperatorOverload = validOperators.get(hashString)
+        this.OperatorOverload = recursionBody.OperatorOverloads.get(hashString)
         if (this.OperatorOverload === undefined) {
-            throw new CompilerError(`did not find overload for operation ${this.Operator} for (${operandType}, ${operand2Type}); Did you mean in include a library?`)
+            throw new CompilerError(`did not find overload for operation ${this.Operator} for (${operand1.ReturnType}, ${operand2?.ReturnType}); Did you mean in include a library?`)
         }
-
         // console.log(`${operandType} ${operatorMapOprString.get(this.Operator)} ${operand2Type} => ${this.OperatorOverload.ReturnType}`)
-        return this.OperatorOverload.ReturnType
-    }
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        if (this.OperatorOverload === undefined) throw new CompilerError('getting assembly without type coercion')
-
-
-
-        if (this.Operand2 !== undefined) {
+        if (operand2 !== undefined) {
 
             if (binarySetOperators.has(this.Operator)) {
-                return [
+                return {
+                    Assembly: [
+                        `// ${operatorMapOprString.get(this.Operator)}`,
+                        ...operand1.Assembly,
+                        `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
+                        ...operand2.Assembly,
+                        `STA ${this.OperatorOverload.Parameters[1].AssemblyName}`,
+                        `JSR ${this.OperatorOverload.AssemblyName}`,
+                        `STA ${(this.Operand as VariableExpression).Identifier}`,
+                    ],
+                    ReturnType: this.OperatorOverload.ReturnType
+                }
+                
+            }
+            return {
+                Assembly: [
                     `// ${operatorMapOprString.get(this.Operator)}`,
-                    ...this.Operand.getAssembly(variableFrameLocationMap),
+                    ...operand1.Assembly,
                     `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
-                    ...this.Operand2.getAssembly(variableFrameLocationMap),
+                    ...operand2.Assembly,
                     `STA ${this.OperatorOverload.Parameters[1].AssemblyName}`,
                     `JSR ${this.OperatorOverload.AssemblyName}`,
-                    `STA ${(this.Operand as VariableExpression).Identifier}`,
-                ]
+                ],
+                ReturnType: this.OperatorOverload.ReturnType
             }
-            return [
-                `// ${operatorMapOprString.get(this.Operator)}`,
-                ...this.Operand.getAssembly(variableFrameLocationMap),
-                `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
-                ...this.Operand2.getAssembly(variableFrameLocationMap),
-                `STA ${this.OperatorOverload.Parameters[1].AssemblyName}`,
-                `JSR ${this.OperatorOverload.AssemblyName}`,
-            ]
         }
 
-        return [
-            //UNTESTED
-            ...this.Operand.getAssembly(newVariableNameMap),
-            `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
+        return {
+            Assembly: [
+                //UNTESTED
+                ...operand1.Assembly,
+                `STA ${this.OperatorOverload.Parameters[0].AssemblyName}`,
 
-            `JSR ${this.OperatorOverload.AssemblyName}`,
-            `STA ${(this.Operand as VariableExpression).Identifier}`,
-        ]
+                `JSR ${this.OperatorOverload.AssemblyName}`,
+                `STA ${(this.Operand as VariableExpression).Identifier}`,
+            ],
+            ReturnType: this.OperatorOverload.ReturnType
+        }
     }
 }

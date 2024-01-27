@@ -2,13 +2,8 @@ import { Expression, ExpressionTypes } from "./Expressions"
 import { LexerError, isValidIdentifier, parseExpr } from "../../lexer/lexer"
 import { Operators, binarySetOperators, operatorMapOprString, operatorMapStringOpr } from "../operators"
 import * as Console from 'glib/dist/Console'
-import { CompilerError } from "../../compiler/compiler"
-
-export interface FuncParameter {
-    Type: string
-    Identifier: string
-    AssemblyName?: string
-}
+import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
+import { FuncParameter } from "./FuncExpression"
 
 export class OperatorOverloadExpression extends Expression {
     override ExpressionType: ExpressionTypes.OperatorOverload = ExpressionTypes.OperatorOverload
@@ -58,8 +53,7 @@ export class OperatorOverloadExpression extends Expression {
             }
             this.Parameters.push({
                 Type: type,
-                Identifier: identifier,
-                AssemblyName: undefined
+                Identifier: identifier
             })
         })
         if (binarySetOperators.has(this.Operator)) {
@@ -72,7 +66,6 @@ export class OperatorOverloadExpression extends Expression {
             throw new CompilerError('operator overloads must have 1 or 2 params')
 
         this.AssemblyName = `OPR_` + this.Parameters.map(p => p.Type).join('_') + '_' + this.Operator
-        this.Parameters.forEach(p => p.AssemblyName = `${this.AssemblyName }_${p.Identifier}`)
         rest = rest.slice(rightParenIndex + 1).trim()
 
         this.Body = parseExpr(rest)
@@ -91,30 +84,41 @@ export class OperatorOverloadExpression extends Expression {
         return `${this.Operator};${this.Parameters.map(p => p.Type).join(',')}`
     }
 
-    override getType(identifiers: Map<string, string>): string {
-        throw new CompilerError('tried to get type of operator overload')
-    }
+    override traverse(recursionBody: recursionBody): recursionReturn {
 
-    override getAssembly(variableFrameLocationMap: Map<string, number>): string[] {
-        const varMap = variableFrameLocationMap.Copy()
-        this.Parameters.forEach(p => {
-            varMap.set(p.Identifier, p.AssemblyName!)
+        const newRecursionBody = recursionBody.Copy() as recursionBody
+        newRecursionBody.VariableFrameLocationMap = new Map<string, number>()
+
+        let next = 2
+        this.Parameters.forEach(param => {
+            if (!param.Size) throw new CompilerError('parameter has no size')
+            newRecursionBody.VariableFrameLocationMap.set(param.Identifier, next)
+            next += param.Size
         })
+        newRecursionBody.VariableFrameLocationMap.set('next', next)
+
+        const body = this.Body.traverse(newRecursionBody)
 
         if (this.Parameters.length === 1) {
-            return [
-                `alloc ${this.Parameters[0].AssemblyName}`,
-                `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ')}`,
-                `@${this.AssemblyName}`,
-            ].concat(this.Body.getAssembly(varMap), '')
+            return {
+                Assembly: [
+                    `alloc ${this.Parameters[0].AssemblyName}`,
+                    `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ')}`,
+                    `@${this.AssemblyName}`,
+                ].concat(body.Assembly, ''),
+                ReturnType: 'void'
+            }
         }
         else {
-            return [
-                `alloc ${this.Parameters[0].AssemblyName}`,
-                `alloc ${this.Parameters[1].AssemblyName}`,
-                `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ') }`,
-                `@${this.AssemblyName}`,
-            ].concat(this.Body.getAssembly(varMap), '')
+            return {
+                Assembly: [
+                    `alloc ${this.Parameters[0].AssemblyName}`,
+                    `alloc ${this.Parameters[1].AssemblyName}`,
+                    `// operator ${operatorMapOprString.get(this.Operator)} ${this.Parameters.map(p => p.Type).join(' ')}`,
+                    `@${this.AssemblyName}`,
+                ].concat(body.Assembly, ''),
+                ReturnType: 'void'
+            }
         }
     }
 }
