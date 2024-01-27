@@ -8,6 +8,8 @@ import { CustomError } from "glib/dist/Error";
 import { OperatorOverloadExpression } from "../shared/expressions/OperatorOverloadExpression";
 import { randomBytes } from "crypto";
 import { stackAssembly } from './stack'
+import { OperationExpression } from "../shared/expressions/OperationExpression";
+import { Operators } from "../shared/operators";
 
 export class CompilerError extends CustomError {
     constructor(...message: any[]) {
@@ -71,7 +73,7 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
 
 // identifiers <name, type>
 // vars, functions, 
-function traverse (exp: Expression, identifiers: Map<string, string>, validTypes: Map<string, number>, validOperators: Map<string, OperatorOverloadExpression>) {
+function traverse (exp: Expression, identifiers: Map<string, Expression>, validTypes: Map<string, number>, validOperators: Map<string, OperatorOverloadExpression>) {
     // hoist structs  
 
     // if (exp.ExpressionType === ExpressionTypes.Compound) {
@@ -92,14 +94,13 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
 
         if (child.ExpressionType === ExpressionTypes.Declaration) {
             const decl = (child as DeclarationExpression)
-            
-            identifiers.set(decl.Identifier, decl.getVarType(validTypes))
+            identifiers.set(decl.Identifier, decl)
         }
         else if (child.ExpressionType === ExpressionTypes.Func) {
             const func = (child as FuncExpression)
-            identifiers.set(func.Identifier, func.ReturnType)
+            identifiers.set(func.Identifier, func)
             func.Parameters.forEach(param => {
-                childIdentifiers.set(param.Identifier, param.Type)
+                childIdentifiers.set(param.Identifier, param)
                 param.Size = validTypes.get(param.Type)
             })
         }
@@ -108,6 +109,14 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
             if (!identifiers.has(vari.Identifier))
                 throw new CompilerError(`Identifier ${vari.Identifier} is not in scope or undeclared`)
         }
+        else if (child.ExpressionType === ExpressionTypes.Operation &&
+            (child as OperationExpression).Operator === Operators.Accessor) {
+                //accessor operator
+
+
+
+                return
+            }
         
         traverse(child, childIdentifiers, validTypes, validOperators)
 
@@ -115,4 +124,4 @@ function traverse (exp: Expression, identifiers: Map<string, string>, validTypes
     //downstream
 
     return exp.getType(identifiers, validOperators)
-}
+} 

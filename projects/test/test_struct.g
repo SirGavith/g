@@ -1,21 +1,30 @@
 struct byte_xy {
-    byte x = 0;
+    byte x;
     byte y;
 };
 
-struct byte_rect {
-    byte_xy xy1;
-    byte_xy xy2;
+func void set(byte_xy this, byte newx) {
+    //this.x = newx;
+    return;
 };
 
 let byte_xy pos;
+//pos.x;
+//pos.y;
 
-pos.x = 3;
-//parsed as pos.(x=3) (bad!)
-pos.y = 4;
+//pos.set(6);
 
-let byte_rect rect;
-rect.xy1 = pos;
+set(pos, 6);
 
-rect.xy1.x;
+
+//struct byte_rect {
+//    byte_xy xy1;
+//    byte_xy xy2;
+//};
+
+
+// let byte_rect rect;
+// rect.xy1 = pos;
+
+// rect.(xy1.x);
 // 3

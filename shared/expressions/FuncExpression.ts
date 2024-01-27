@@ -44,7 +44,8 @@ export class FuncExpression extends Expression {
             }
             this.Parameters.push({
                 Type: type,
-                Identifier: identifier
+                Identifier: identifier,
+                Size: undefined
             })
         })
         rest = rest.slice(rightParenIndex + 1).trim()
