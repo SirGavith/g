@@ -8,6 +8,7 @@ export class StructExpression extends Expression {
     override ExpressionType: ExpressionTypes.Struct = ExpressionTypes.Struct
     Identifier: string
     Members: DeclarationExpression[] = []
+    Size?: number
 
     constructor(rest?: string) {
         super()
@@ -39,12 +40,20 @@ export class StructExpression extends Expression {
         })
     }
 
-    getSize() {
-        return this.Members.length // FOR ARRAYS THIS NEEDS TO CHANGE
+    getSize(validTypes: Map<string, { Size: number }>) {
+        let size = 0
+
+        this.Members.forEach(m => {
+            const memberType = validTypes.get(m.Identifier)
+            if (!memberType)
+                throw new CompilerError(`type '${m.Identifier}`)
+            size += memberType.Size
+        })
+
+        return size
     }
 
     override traverse(recursionBody: recursionBody): recursionReturn {
         throw new CompilerError('recursed on a struct')
-
     }
 }

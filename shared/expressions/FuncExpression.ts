@@ -64,16 +64,25 @@ export class FuncExpression extends Expression {
     }
 
     override traverse(recursionBody: recursionBody): recursionReturn {
-        const newRecursionBody = recursionBody.Copy() as recursionBody
-        newRecursionBody.VariableFrameLocationMap = new Map<string, number>()
+        const newRecursionBody: recursionBody = {
+            Types: recursionBody.Types,
+            Variables: new Map,
+            NextVariableLocation: 2,
+            Functions: recursionBody.Functions,
+            OperatorOverloads: recursionBody.OperatorOverloads,
+        }
 
-        let next = 2
         this.Parameters.forEach(param => {
-            if (!param.Size) throw new CompilerError('parameter has no size')
-            newRecursionBody.VariableFrameLocationMap.set(param.Identifier, next)
-            next += param.Size
+            if (!param.Size)
+                throw new CompilerError('parameter has no size')
+            newRecursionBody.Variables.set(param.Identifier, {
+                Identifier: param.Identifier,
+                Type: param.Type,
+                Size: param.Size,
+                FrameLocation: recursionBody.NextVariableLocation,
+            })
+            recursionBody.NextVariableLocation += param.Size
         })
-        newRecursionBody.VariableFrameLocationMap.set('next', next)
 
         const body = this.Body.traverse(newRecursionBody)
 

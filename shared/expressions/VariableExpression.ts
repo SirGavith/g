@@ -19,18 +19,16 @@ export class VariableExpression extends Expression {
     }
 
     override traverse(recursionBody: recursionBody): recursionReturn {
-        const type = recursionBody.IdentifierType.get(this.Identifier)
-        const frameLocation = recursionBody.VariableFrameLocationMap.get(this.Identifier)!
-        if (type === undefined || frameLocation == undefined)
+        const variable = recursionBody.Variables.get(this.Identifier)
+        if (variable === undefined)
             throw new CompilerError(`variable '${this.Identifier}' is not declared before usage`)
-
 
         return {
             Assembly: [
-                `LDY #${frameLocation}`,
+                `LDY #${variable.FrameLocation}`,
                 `LDA (framePtr),Y`
             ],
-            ReturnType: type
+            ReturnType: variable.Type
         }
     }
 }

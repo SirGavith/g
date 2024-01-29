@@ -1,4 +1,4 @@
-import { DeclarationExpression } from "../shared/expressions/DeclarationExpression";
+import { DeclarationExpression, Variable } from "../shared/expressions/DeclarationExpression";
 import { Expression, ExpressionTypes } from "../shared/expressions/Expressions";
 import { FuncExpression } from "../shared/expressions/FuncExpression";
 import { StructExpression } from "../shared/expressions/StructExpression";
@@ -27,20 +27,17 @@ export function nextArbitraryIdentifier(): string {
 export function Compile(expression: Expression, inFileDir: string, debug: boolean = false) {
     if (debug) expression.Log()
 
-    //find all valid types
     const validOperators = new Map<string, OperatorOverloadExpression>()
-    const validStructs = new Map<string, StructExpression>()
-    const validTypes = new Map<string, number>([
-        ['byte', 1],
-        ['address', 2],
-    ])
 
+    // const structs: StructExpression[] = []
+
+    const validTypes = new Map<string, { Size: number }>()
+    validTypes.set('byte', { Size: 1 })
 
     expression.Children = expression.Children.filter(childExpr => {
         if (childExpr.ExpressionType === ExpressionTypes.Struct) {
             const struct = childExpr as StructExpression
-            validTypes.set(struct.Identifier, struct.getSize())
-            validStructs.set(struct.Identifier, struct)
+            validTypes.set(struct.Identifier, { Size: struct.getSize(validTypes) })
             return false
         }
         else if (childExpr.ExpressionType === ExpressionTypes.OperatorOverload) {
@@ -51,38 +48,41 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
 
         return true
     })
-    
+
     // console.log('valid types:', validTypes)
     // console.log('valid Operators', validOperators)
 
-    
-    //map <identifier, type>
-    traverse(expression, new Map([]), validTypes, validOperators)
-
-    const variableFrameLocationMap = new Map([['next', 2]])
-
-    const a = expression.traverse(variableFrameLocationMap)
+    const body = expression.traverse({
+        Types: validTypes,
+        Variables: new Map,
+        NextVariableLocation: 2,
+        Functions: new Map,
+        OperatorOverloads: validOperators,
+    })
 
     return [
         `JSR init_stack\n`,
         `//Your code starts here:`,
-        ...a,
+        ...body.Assembly,
         `BRK\n\n`,
-        ...validOperators.toArray().flatMap(([_, op]) => op.getAssembly(new Map)),
+        //TODO: fix operators
+        // ...validOperators.toArray().flatMap(([_, op]) => op.getAssembly(new Map)),
         ...stackAssembly
     ]
 }
 
 export interface recursionBody {
-    VariableFrameLocationMap: Map<string, number>
-    IdentifierType: Map<string, string>,
+    Types: Map<string, { Size: number }>
+
+    Variables: Map<string, Variable>
+    NextVariableLocation: number
     
-    //kinda want function signatures here too
+    Functions: Map<string, FuncExpression>
     OperatorOverloads: Map<string, OperatorOverloadExpression>
 }
 
 export interface recursionReturn {
-    Assembly: string[],
+    Assembly: string[]
     ReturnType: string
 }
 

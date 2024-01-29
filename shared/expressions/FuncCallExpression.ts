@@ -41,14 +41,15 @@ export class FuncCallExpression extends Expression {
 
 
     override traverse(recursionBody: recursionBody): recursionReturn {
-        const returnType = recursionBody.IdentifierType.get(this.Identifier)
+        const func = recursionBody.Functions.get(this.Identifier)
         
-        if (returnType === undefined)
-        throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
+        if (func === undefined)
+            throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
     
         const params = this.Parameters.map(p => p.traverse(recursionBody))
-        //really want function signature here to typecheck params
-        if (params.some(p => ))
+
+        if (params.some((p, i) => p.ReturnType !== func.Parameters[i].Type))
+            throw new CompilerError(`function '${this.Identifier}' parameters do not match caller`)
 
         return {
             Assembly: [
@@ -63,7 +64,7 @@ export class FuncCallExpression extends Expression {
                 `JSR ${this.Identifier}`,
                 `JSR popStackFrame`,
             ],
-            ReturnType: returnType
+            ReturnType: func.ReturnType
         }
     }
 }

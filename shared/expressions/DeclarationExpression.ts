@@ -6,12 +6,17 @@ import { Operators } from '../operators'
 import { VariableExpression } from './VariableExpression'
 import { CompilerError, recursionBody, recursionReturn } from "../../compiler/compiler"
 
+export interface Variable {
+    Identifier: string
+    Type: string
+    Size: number
+    FrameLocation: number
+}
 
 export class DeclarationExpression extends Expression {
     override ExpressionType: ExpressionTypes.Declaration = ExpressionTypes.Declaration
     Identifier: string
     Type: string
-    Size?: number
     Initializer?: Expression
 
     constructor(rest?: string) {
@@ -50,26 +55,34 @@ export class DeclarationExpression extends Expression {
     }
 
 
-
-    getVarType(validTypes: Map<string, number>) {
-        if (!validTypes.has(this.Type)) 
-            throw new CompilerError(`declaration type ${this.Type} is unknown`)
-        this.Size = validTypes.get(this.Type)!
-        return this.Type
-    }
-
+    // getVarType(validTypes: Map<string, number>) {
+    //     if (!validTypes.has(this.Type)) 
+    //         throw new CompilerError(`declaration type ${this.Type} is unknown`)
+    //     this.Size = validTypes.get(this.Type)!
+    //     return this.Type
+    // }
 
     override traverse(recursionBody: recursionBody): recursionReturn {
+        if (!recursionBody.Types.has(this.Type))
+            throw new CompilerError(`type '${this.Type} is not defined when declaring variable'${this.Identifier}`)
 
-        if (!this.Size)
-            throw new CompilerError(`do not know size of vairbale ${this.Identifier}`)
-        const next = recursionBody.VariableFrameLocationMap.get('next')!
-        recursionBody.VariableFrameLocationMap.set(this.Identifier, next)
-        recursionBody.VariableFrameLocationMap.set('default', next + this.Size)
+        const t = recursionBody.Types.get(this.Type)!
+
+        if (recursionBody.Variables.has(this.Identifier))
+            throw new CompilerError(`variable '${this.Identifier}' is already defined`)
+
+
+        recursionBody.Variables.set(this.Identifier, {
+            Identifier: this.Identifier,
+            Type: this.Type,
+            Size: t.Size,
+            FrameLocation: recursionBody.NextVariableLocation,
+        })
+        recursionBody.NextVariableLocation += t.Size
 
         return {
             Assembly: [
-                `LDA #${this.Size}`,
+                `LDA #${t.Size}`,
                 `JSR alloca`
             ],
             ReturnType: 'void'

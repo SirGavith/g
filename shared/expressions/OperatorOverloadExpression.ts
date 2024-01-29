@@ -86,6 +86,8 @@ export class OperatorOverloadExpression extends Expression {
 
     override traverse(recursionBody: recursionBody): recursionReturn {
 
+        //DEAD CODE
+
         const newRecursionBody = recursionBody.Copy() as recursionBody
         newRecursionBody.VariableFrameLocationMap = new Map<string, number>()
 
