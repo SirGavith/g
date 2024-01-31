@@ -25,6 +25,7 @@ export class VariableExpression extends Expression {
 
         return {
             Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 `LDY #${variable.FrameLocation}`,
                 `LDA (framePtr),Y`
             ],

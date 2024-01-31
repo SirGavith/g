@@ -28,9 +28,11 @@ export class ReturnExpression extends Expression {
         const expr = this.Expression?.traverse(recursionBody)
 
         return {
-            Assembly: (expr?.Assembly ?? []).concat([
-                `RTS`
-            ]),
+            Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
+                ...(expr?.Assembly ?? []),
+                `RTS`,
+            ],
             ReturnType: expr === undefined ? 'void' : expr.ReturnType
         }
     }

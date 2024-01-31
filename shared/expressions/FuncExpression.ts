@@ -63,9 +63,11 @@ export class FuncExpression extends Expression {
         this.Body.Log(indent + 1)
     }
 
+
+
     override traverse(recursionBody: recursionBody): recursionReturn {
         const newRecursionBody: recursionBody = {
-            Types: recursionBody.Types,
+            TypeSizes: recursionBody.TypeSizes,
             Variables: new Map,
             NextVariableLocation: 2,
             Functions: recursionBody.Functions,
@@ -73,8 +75,9 @@ export class FuncExpression extends Expression {
         }
 
         this.Parameters.forEach(param => {
-            if (!param.Size)
-                throw new CompilerError('parameter has no size')
+            if (!param.Size) param.Size = recursionBody.TypeSizes.get(param.Type)?.Size
+            if (!param.Size) throw new CompilerError(`parameter type '${param.Type}' is undefined at param ${param.Identifier} in funciton ${this.Identifier}`)
+
             newRecursionBody.Variables.set(param.Identifier, {
                 Identifier: param.Identifier,
                 Type: param.Type,
@@ -88,6 +91,7 @@ export class FuncExpression extends Expression {
 
         return {
             Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 `@${this.Identifier}`,
                 ...body.Assembly,
             ],

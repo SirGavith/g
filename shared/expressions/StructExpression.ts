@@ -44,7 +44,7 @@ export class StructExpression extends Expression {
         let size = 0
 
         this.Members.forEach(m => {
-            const memberType = validTypes.get(m.Identifier)
+            const memberType = validTypes.get(m.Type)
             if (!memberType)
                 throw new CompilerError(`type '${m.Identifier}`)
             size += memberType.Size

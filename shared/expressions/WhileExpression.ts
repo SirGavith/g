@@ -46,6 +46,7 @@ export class WhileExpression extends Expression {
 
         return {
             Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 `@${while_name}`,
                 ...condition.Assembly,
                 `BEQ ${end_name}`,

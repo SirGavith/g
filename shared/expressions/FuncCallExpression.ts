@@ -46,20 +46,39 @@ export class FuncCallExpression extends Expression {
         if (func === undefined)
             throw new CompilerError(`function '${this.Identifier}' is not declared before usage`)
     
-        const params = this.Parameters.map(p => p.traverse(recursionBody))
+        
+        if (this.Parameters.length !== func.Parameters.length)
+        throw new CompilerError(`function '${this.Identifier}' parameters do not match caller`)
+    
+    
+        let paramsSize = 0
+        const paramAsm = []
+    
+        for (let i = 0; i < this.Parameters.length; i++) {
+            const p = this.Parameters[i].traverse(recursionBody)
+            const def = func.Parameters[i]
+            
+            if (p.ReturnType !== def.Type)
+                throw new CompilerError(`function '${this.Identifier}' parameters do not match caller`)
 
-        if (params.some((p, i) => p.ReturnType !== func.Parameters[i].Type))
-            throw new CompilerError(`function '${this.Identifier}' parameters do not match caller`)
+            if (!def.Size) def.Size = recursionBody.TypeSizes.get(def.Type)?.Size
+            if (!def.Size) throw new CompilerError(`parameter type '${def.Type}' is undefined at param ${def.Identifier} in funciton ${def.Identifier}`)
+
+            paramAsm.push(
+                ...p.Assembly,
+                `// Copy as param`,
+                `LDY #${paramsSize + 2}`,
+                `STA (stackPtr),Y`,
+            )
+            paramsSize += def.Size
+        }
 
         return {
             Assembly: [
                 //load params
-                `LDA #${this.Parameters.length}`,
-                ...params.flatMap((p, i) => [
-                    ...p.Assembly,
-                    `LDY #${i + 2}`,
-                    `STA (stackPtr),Y`,
-                ]),
+                `// ${ExpressionTypes[this.ExpressionType]}`,
+                ...paramAsm,
+                `LDA #${paramsSize}`,
                 `JSR pushStackFrame`,
                 `JSR ${this.Identifier}`,
                 `JSR popStackFrame`,

@@ -3,18 +3,18 @@ struct byte_xy {
     byte y;
 };
 
-func void set(byte_xy this, byte newx) {
+func void get(byte_xy this, byte newx) {
     //this.x = newx;
     return;
 };
 
 let byte_xy pos;
-//pos.x;
-//pos.y;
+//pos.x; // location: 2
+//pos.y; // location: 3
 
-//pos.set(6);
+//pos.get(6);
 
-set(pos, 6);
+get(pos, 6);
 
 
 //struct byte_rect {

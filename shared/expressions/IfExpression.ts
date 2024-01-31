@@ -58,12 +58,14 @@ export class IfExpression extends Expression {
 
         return {
             Assembly: !this.ElseExpression ? [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 ...this.Condition.traverse(recursionBody).Assembly,
                 `BEQ ${end_name}`,
                 //true case
                 ...this.Body.traverse(recursionBody).Assembly,
                 `@${end_name}`,
             ] : [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 ...this.Condition.traverse(recursionBody).Assembly,
                 `BEQ ${else_name}`,
                 //true case

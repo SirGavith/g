@@ -1,21 +1,30 @@
 JSR init_stack
 
 //Your code starts here:
+// Compound
+// Declaration
 LDA #2
 JSR alloca
-LDA #2
-JSR pushStackFrame
+// FuncCall
+// Variable
 LDY #2
 LDA (framePtr),Y
+// Copy as param
 LDY #2
-STA (framePtr),Y
+STA (stackPtr),Y
+// Literal
 LDA #$6
-LDY #3
-STA (framePtr),Y
-JSR set
+// Copy as param
+LDY #4
+STA (stackPtr),Y
+LDA #3
+JSR pushStackFrame
+JSR get
 JSR popStackFrame
 JMP END_R1234
-@set
+// Func
+@get
+// Return
 RTS
 @END_R1234
 BRK

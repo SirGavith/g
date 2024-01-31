@@ -2,6 +2,7 @@ import { CompilerError, nextArbitraryIdentifier, recursionReturn, recursionBody 
 import { Operators } from '../operators'
 import * as Console from 'glib/dist/Console'
 import { OperatorOverloadExpression } from './OperatorOverloadExpression'
+import { FuncExpression } from './FuncExpression'
 
 export enum ExpressionTypes {
     Compound,
@@ -50,14 +51,17 @@ export class CompoundExpression extends Expression {
     }
 
     override traverse(recursionBody: recursionBody): recursionReturn {
-
         const endName = 'END_' + nextArbitraryIdentifier()
-
 
         return {
             Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 ...this.Children.flatMap(child => {
-                    if (child.ExpressionType === ExpressionTypes.Func) return []
+                    if (child.ExpressionType === ExpressionTypes.Func) {
+                        const func = child as FuncExpression
+                        recursionBody.Functions.set(func.Identifier, func)
+                        return []
+                    }
                     return child.traverse(recursionBody).Assembly
                 }),
                 `JMP ${endName}`,

@@ -63,10 +63,10 @@ export class DeclarationExpression extends Expression {
     // }
 
     override traverse(recursionBody: recursionBody): recursionReturn {
-        if (!recursionBody.Types.has(this.Type))
+        if (!recursionBody.TypeSizes.has(this.Type))
             throw new CompilerError(`type '${this.Type} is not defined when declaring variable'${this.Identifier}`)
 
-        const t = recursionBody.Types.get(this.Type)!
+        const t = recursionBody.TypeSizes.get(this.Type)!
 
         if (recursionBody.Variables.has(this.Identifier))
             throw new CompilerError(`variable '${this.Identifier}' is already defined`)
@@ -82,6 +82,7 @@ export class DeclarationExpression extends Expression {
 
         return {
             Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 `LDA #${t.Size}`,
                 `JSR alloca`
             ],

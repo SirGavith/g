@@ -6,7 +6,6 @@ import * as Console from 'glib/dist/Console'
 import { VariableExpression } from "../shared/expressions/VariableExpression";
 import { CustomError } from "glib/dist/Error";
 import { OperatorOverloadExpression } from "../shared/expressions/OperatorOverloadExpression";
-import { randomBytes } from "crypto";
 import { stackAssembly } from './stack'
 import { OperationExpression } from "../shared/expressions/OperationExpression";
 import { Operators } from "../shared/operators";
@@ -53,7 +52,7 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
     // console.log('valid Operators', validOperators)
 
     const body = expression.traverse({
-        Types: validTypes,
+        TypeSizes: validTypes,
         Variables: new Map,
         NextVariableLocation: 2,
         Functions: new Map,
@@ -72,7 +71,7 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
 }
 
 export interface recursionBody {
-    Types: Map<string, { Size: number }>
+    TypeSizes: Map<string, { Size: number }>
 
     Variables: Map<string, Variable>
     NextVariableLocation: number

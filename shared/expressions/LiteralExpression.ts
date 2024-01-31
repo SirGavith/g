@@ -19,6 +19,7 @@ export class LiteralExpression extends Expression {
     override traverse(recursionBody: recursionBody): recursionReturn {
         return {
             Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
                 `LDA #$${this.Value.toString(16)}`
             ],
             ReturnType: 'byte'

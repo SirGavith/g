@@ -34,13 +34,15 @@ export class AsmExpression extends Expression {
 
     override traverse(recursionBody: recursionBody): recursionReturn {
         return {
-            Assembly: this.Body.map(l => {
+            Assembly: [
+                `// ${ExpressionTypes[this.ExpressionType]}`,
+                ...this.Body.map(l => {
                 const [_, id] = l.split(' ')
                 // if (newVariableNameMap.has(id)) {
                 //     return l.replace(id, newVariableNameMap.get(id)!)
                 // }
                 return l
-            }),
+            })],
             ReturnType: 'byte'
         }
     }
