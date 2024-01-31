@@ -11,7 +11,7 @@ Extensions.init()
 
 class UnitTest {
     constructor(public Name: string, public gFile: string, public ExpectedResult: number) { }
-
+    
     Run() {
         const filePath = path.join(testsDir, this.gFile)
 
