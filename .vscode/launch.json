@@ -1,0 +1,165 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "console": "internalConsole",
+            "type": "node",
+            "request": "launch",
+            "name": "Assemble Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/assemble.js",
+            
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "console": "externalTerminal",
+            "type": "node",
+            "request": "launch",
+            "name": "Emulate Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/emulate.js",
+            "args": [
+                "${file}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Assemble and Emulate Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/assembleEmulate.js",
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "windows": {
+                "console": "externalTerminal",
+            },
+            "linux": {
+                "console": "integratedTerminal"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Compile and Emulate Open File",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/compileEmulate.js",
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "windows": {
+                "console": "externalTerminal",
+            },
+            "linux": {
+                "console": "integratedTerminal"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Run Tests",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/tests.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "windows": {
+                "console": "externalTerminal",
+            },
+            "linux": {
+                "console": "integratedTerminal"
+            }
+        },
+        {
+            "console": "externalTerminal",
+            "type": "node",
+            "request": "launch",
+            "name": "Assemble Open File and Program to EEPROM",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/assembleProgramEEPROM/main.js",
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Compile",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/compile.js",
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "windows": {
+                "console": "externalTerminal",
+            },
+            "linux": {
+                "console": "integratedTerminal"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Run Lexer",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/built/launchers/lex.js",
+            "args": [
+                "${file}",
+                "${fileDirname}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "windows": {
+                "console": "externalTerminal",
+            },
+            "linux": {
+                "console": "integratedTerminal"
+            }
+        },
+    ]
+}
