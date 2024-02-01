@@ -61,7 +61,7 @@ export function Compile(expression: Expression, inFileDir: string, debug: boolea
 
     return [
         `JSR init_stack\n`,
-        `//Your code starts here:`,
+        `//Your code starts here 0x1d:`,
         ...body.Assembly,
         `BRK\n\n`,
         //TODO: fix operators

@@ -1,6 +1,6 @@
 import { CustomError } from 'glib/dist/Error'
-import { CompoundExpression, Expression } from '../shared/expressions/Expressions'
-import { binaries, operatorMapStringOpr, unaryPostfixes, unaryPrefixes } from '../shared/operators'
+import { CompoundExpression, Expression, ExpressionTypes } from '../shared/expressions/Expressions'
+import { Operators, binaries, operatorMapStringOpr, unaryPostfixes, unaryPrefixes } from '../shared/operators'
 
 import { AsmExpression } from '../shared/expressions/AsmExpression'
 import { ClassExpression } from '../shared/expressions/ClassExpression'

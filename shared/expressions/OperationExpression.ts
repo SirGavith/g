@@ -50,6 +50,18 @@ export class OperationExpression extends Expression {
         }
         // console.log(`${operandType} ${operatorMapOprString.get(this.Operator)} ${operand2Type} => ${this.OperatorOverload.ReturnType}`)
 
+        if (this.Operator === Operators.SetEQ) {
+            if (this.Operand2 === undefined) throw new CompilerError('sets must have 2 args')
+            this.Operand.
+        }
+
+        if (this.Operator === Operators.Accessor) {
+            throw new CompilerError()
+        }
+
+
+
+
         if (operand2 !== undefined) {
 
             if (binarySetOperators.has(this.Operator)) {

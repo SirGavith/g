@@ -1,6 +1,6 @@
 JSR init_stack
 
-//Your code starts here:
+//Your code starts here 0x1d:
 // Compound
 // Declaration
 LDA #2
@@ -21,6 +21,8 @@ LDA #3
 JSR pushStackFrame
 JSR get
 JSR popStackFrame
+// Literal
+LDA #$0
 JMP END_R1234
 // Func
 @get

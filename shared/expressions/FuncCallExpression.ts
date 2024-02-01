@@ -64,6 +64,8 @@ export class FuncCallExpression extends Expression {
             if (!def.Size) def.Size = recursionBody.TypeSizes.get(def.Type)?.Size
             if (!def.Size) throw new CompilerError(`parameter type '${def.Type}' is undefined at param ${def.Identifier} in funciton ${def.Identifier}`)
 
+            
+            //TODO: need to copy all bytes of param
             paramAsm.push(
                 ...p.Assembly,
                 `// Copy as param`,
